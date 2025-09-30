@@ -5,13 +5,15 @@ L’utilisateur peut ajouter ses propres courses et obtenir des prédictions per
 
 🚀 Fonctionnalités
 
-Ajouter de nouvelles performances (distance, dénivelé, sexe, temps).
+Ajouter de nouvelles performances (distance, sexe, temps).
 
 Visualiser l’historique de ses performances.
 
 Réentraîner le modèle automatiquement avec ses nouvelles données.
 
 Prédire le temps sur une nouvelle distance/dénivelé.
+
+traking et sauvegarde des datas avec mlflow
 
 ## 📦 Installation
 
