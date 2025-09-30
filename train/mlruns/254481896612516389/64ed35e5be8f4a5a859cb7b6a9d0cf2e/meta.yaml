@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/64ed35e5be8f4a5a859cb7b6a9d0cf2e/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '254481896612516389'
+lifecycle_stage: active
+run_id: 64ed35e5be8f4a5a859cb7b6a9d0cf2e
+run_name: capable-midge-652
+run_uuid: 64ed35e5be8f4a5a859cb7b6a9d0cf2e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759149595803
+status: 1
+tags: []
+user_id: CePC

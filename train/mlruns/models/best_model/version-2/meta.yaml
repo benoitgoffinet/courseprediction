@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1759151055659
+current_stage: None
+description: null
+last_updated_timestamp: 1759151055659
+name: best_model
+run_id: 7049b0fc4c6d47928aee72ca10c695cd
+run_link: null
+source: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/7049b0fc4c6d47928aee72ca10c695cd/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/7049b0fc4c6d47928aee72ca10c695cd/artifacts/model
+user_id: null
+version: 2
