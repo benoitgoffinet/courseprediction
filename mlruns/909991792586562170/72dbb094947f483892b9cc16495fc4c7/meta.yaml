@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/909991792586562170/72dbb094947f483892b9cc16495fc4c7/artifacts
+end_time: 1761287041693
+entry_point_name: ''
+experiment_id: '909991792586562170'
+lifecycle_stage: active
+run_id: 72dbb094947f483892b9cc16495fc4c7
+run_name: data_ haricot_4
+run_uuid: 72dbb094947f483892b9cc16495fc4c7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761287041544
+status: 3
+tags: []
+user_id: CePC

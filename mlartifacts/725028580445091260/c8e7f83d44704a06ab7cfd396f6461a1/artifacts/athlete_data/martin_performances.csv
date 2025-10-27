@@ -1,0 +1,4 @@
+Gender,Name,Time,Distance,moyenne/athlete/3k,moyenne/générale/3k,Rapport(Athlete/moyenne)3k au KM,moyenne/athlete/5k,moyenne/générale/5k,Rapport(Athlete/moyenne)5k au km,moyenne/athlete/10k,moyenne/générale/10k,Rapport(Athlete/moyenne)10k au km,moyenne/athlete/21k,moyenne/générale/21k,Rapport(Athlete/moyenne)21k au km,moyenne/athlete/42k,moyenne/générale/42k,Rapport(Athlete/moyenne)42k au km,Score/athlete,T/K,Score/athlete/moyenne
+M,martin,1080.0,5000,,5.297647058823529,,5.0,5.1960671462829735,-0.1960671462829735,,5.266632653061225,,,5.400638612033961,,,5.769087702421036,,-0.1960671462829735,3.6,-0.5973780975219825
+M,martin,2250.0,10000,,5.297647058823529,,,5.1960671462829735,,,5.266632653061225,,,5.400638612033961,,,5.769087702421036,,0.0,3.75,-0.5973780975219825
+M,martin,1500.0,5000,,,,3.6,5.1960671462829735,-1.596067146282974,,5.266632653061225,,,5.400638612033961,,,5.769087702421036,,-1.596067146282974,5.0,-0.5973780975219825
