@@ -6,4 +6,4 @@ COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements.txt
 COPY . /app
 EXPOSE 8501
-CMD ["bash", "-lc", "streamlit run app/app.py --server.address 0.0.0.0 --server.port ${PORT}"]
+CMD ["bash", "-lc", "streamlit run app.py --server.address 0.0.0.0 --server.port ${PORT}"]
