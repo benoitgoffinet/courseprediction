@@ -55,6 +55,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.REPO }}:${{ steps.meta.outputs.TAG }}
           provenance: false
+             # ⬇️ Ajouts clés
+          no-cache: true                 # force un build frais (une seule fois)
+          build-args: |                  # passe le SHA au Dockerfile
+            GIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
