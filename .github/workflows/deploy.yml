@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 name: Build & Deploy to Azure Web App (Container)
 
 on:
@@ -5,20 +6,21 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-# Empêche les déploiements qui se chevauchent sur la même app
+# Empêche les déploiements qui se chevauchent
 concurrency:
   group: deploy-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# ====== Paramètres à adapter ======
 env:
-  ACR_NAME: coursepredacr123               # Nom de ton ACR (sans .azurecr.io)
-  IMAGE_NAME: courseprediction             # Nom du repo d'image dans ACR
-  WEBAPP_NAME: coursepred-webapp-xyz       # Nom de l'Azure Web App (Linux, container)
-  RESOURCE_GROUP: predictioncourse_group    # Resource group de la Web App
-
-defaults:
-  run:
-    shell: bash
+  ACR_NAME: coursepredacr123                 # Nom ACR (sans .azurecr.io)
+  IMAGE_NAME: courseprediction               # Repo d'image dans l'ACR
+  WEBAPP_NAME: coursepred-webapp-xyz         # Nom de la Web App (Linux, container)
+  RESOURCE_GROUP: predictioncourse_group     # Resource group de la Web App
+  SLOT_NAME: ""                              # ex: "staging" si vous avez un slot, sinon laissez vide
+  EXPOSED_PORT: "8501"                       # Port exposé par votre conteneur
+  DOCKERFILE_PATH: "./Dockerfile"            # Chemin vers votre Dockerfile
+# ===================================
 
 jobs:
   build-and-deploy:
@@ -27,37 +29,60 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Azure login
+      - name: Azure login (Service Principal)
         uses: azure/login@v2
         with:
-          # Service principal JSON (format AZ CLI) stocké dans le secret
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Connexion au registre pour push (côté GitHub runner)
+      - name: Show Azure context (debug)
+        run: az account show
+
       - name: ACR login (for docker push)
         run: az acr login --name "$ACR_NAME"
 
-      # Calcule les tags d'image (immutables) et le nom complet
       - name: Compute image metadata
         id: meta
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
+          IMAGE="${ACR_NAME}.azurecr.io/${IMAGE_NAME}"
           echo "TAG=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "IMAGE=${ACR_NAME}.azurecr.io/${IMAGE_NAME}" >> $GITHUB_OUTPUT
-          echo "Will build: ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${SHORT_SHA} and :latest"
+          echo "IMAGE=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "IMAGE_URI=${IMAGE}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "Will build & push: ${IMAGE}:${SHORT_SHA}"
 
-      # Build multi-tag + push (le push du tag immuable d'abord)
-      - name: Build & Push image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build & push UNE SEULE étiquette immuable (= SHA). Pas de :latest pour éviter les retours en arrière.
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: true
+          tags: ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Attendre que le tag soit visible côté ACR (évite pull d'une image non indexée)
+      - name: Wait for tag availability in ACR
         run: |
-          docker build \
-            -t "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}" \
-            -t "${{ steps.meta.outputs.IMAGE }}:latest" \
-            .
-          docker push "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}"
-          docker push "${{ steps.meta.outputs.IMAGE }}:latest"
+          for i in {1..30}; do
+            found=$(az acr repository show-tags -n "$ACR_NAME" --repository "$IMAGE_NAME" \
+              --query "[?@=='${{ steps.meta.outputs.TAG }}'] | length(@)" -o tsv || echo 0)
+            if [ "$found" = "1" ]; then
+              echo "Tag ${{ steps.meta.outputs.TAG }} visible in ACR."
+              break
+            fi
+            echo "Tag not visible yet, retrying ($i/30)..."
+            sleep 3
+          done
 
-      # ⚠️ Nécessite l'option "Admin user" activée sur l'ACR
+      # Récupère user/pass ACR (admin) pour configurer la Web App
       - name: Get ACR admin credentials
         id: acrcreds
         run: |
@@ -66,32 +91,33 @@ jobs:
           echo "USER=$USER" >> $GITHUB_OUTPUT
           echo "PASS=$PASS" >> $GITHUB_OUTPUT
 
-      # Pointe la Web App vers le tag immuable (pas :latest) et configure le registre
-      - name: Configure Web App container to immutable tag
+      # App settings utiles : désactiver les webhooks ACR (CD), fixer le port, etc.
+      - name: Set App Settings (disable ACR CD, set port)
+        run: |
+          az webapp config appsettings set \
+            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" ${SLOT_NAME:+--slot "$SLOT_NAME"} \
+            --settings \
+              DOCKER_ENABLE_CI=false \
+              WEBSITES_PORT=${EXPOSED_PORT} \
+              USE_AZURE_MLFLOW=1 \
+              MLFLOW_TRACKING_URI="azureml://canadacentral.api.azureml.ms/mlflow/v1.0/subscriptions/b115f392-8b15-499a-a548-edd84815dbcb/resourceGroups/predictioncourse_group/providers/Microsoft.MachineLearningServices/workspaces/courseapied-ws"
+
+      # Pointe la Web App vers l'image immuable + config du registre
+      - name: Configure Web App container (immutable tag)
         run: |
           az webapp config container set \
-            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
+            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" ${SLOT_NAME:+--slot "$SLOT_NAME"} \
             --container-image-name "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}" \
             --container-registry-url "https://${ACR_NAME}.azurecr.io" \
             --container-registry-user "${{ steps.acrcreds.outputs.USER }}" \
             --container-registry-password "${{ steps.acrcreds.outputs.PASS }}"
 
-      # Tes App Settings (ajoute/ajuste selon besoin)
-      - name: Set App Settings
-        run: |
-          az webapp config appsettings set \
-            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
-            --settings \
-              WEBSITES_PORT=8501 \
-              USE_AZURE_MLFLOW=1 \
-              MLFLOW_TRACKING_URI="azureml://canadacentral.api.azureml.ms/mlflow/v1.0/subscriptions/b115f392-8b15-499a-a548-edd84815dbcb/resourceGroups/predictioncourse_group/providers/Microsoft.MachineLearningServices/workspaces/courseapied-ws"
-
-      # Redémarre pour tirer la nouvelle image
       - name: Restart Web App
-        run: az webapp restart -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
+        run: az webapp restart -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" ${SLOT_NAME:+--slot "$SLOT_NAME"}
 
-      # Petite vérification : affiche l'image effective côté Web App
+      # Vérifs : linuxFxVersion & container config effectifs
       - name: Show effective container config
         run: |
-          az webapp config container show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
-          echo "Expecting image: ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}"
+          echo "Expecting image: ${{ steps.meta.outputs.IMAGE_URI }}"
+          az webapp show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" ${SLOT_NAME:+--slot "$SLOT_NAME"} --query "siteConfig.linuxFxVersion" -o tsv
+          az webapp config container show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" ${SLOT_NAME:+--slot "$SLOT_NAME"}
