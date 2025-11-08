@@ -34,7 +34,9 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 import streamlit as st
-
+import streamlit as st, pathlib, os
+sha = pathlib.Path("version.txt").read_text().strip() if pathlib.Path("version.txt").exists() else os.getenv("GIT_SHA","dev")
+st.sidebar.write(f"🧪 Build: {sha}")
 
 
 def get_data(local_path, exp_name):
