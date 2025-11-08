@@ -1,0 +1,58 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "041d9b6da9d640069ee383441bd5aa53",
+      "experiment_id": "985841577242864709",
+      "user_id": "CePC",
+      "status": "RUNNING",
+      "start_time": 1759235763100,
+      "end_time": null,
+      "lifecycle_stage": "active",
+      "artifact_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/985841577242864709/041d9b6da9d640069ee383441bd5aa53/artifacts",
+      "run_name": "angry-lark-326",
+      "_start_time": "2025-09-30 14:36:03",
+      "_end_time": null
+    },
+    "params": {
+      "model__max_depth": "5",
+      "model__min_samples_split": "2",
+      "model__n_estimators": "200"
+    },
+    "metrics": {
+      "R2_Score_VC": [
+        {
+          "value": 0.9044897308167406,
+          "timestamp": 1759235763177,
+          "step": 0,
+          "model_id": null,
+          "dataset_name": null,
+          "dataset_digest": null,
+          "run_id": "041d9b6da9d640069ee383441bd5aa53"
+        }
+      ]
+    },
+    "tags": {
+      "mlflow.log-model.history": "[{\"run_id\": \"041d9b6da9d640069ee383441bd5aa53\", \"artifact_path\": \"mikado_5\", \"utc_time_created\": \"2025-09-30 12:36:03.192732\", \"model_uuid\": \"da8b8ec9a1c44f29b53fd7415a0ab1d6\", \"flavors\": {\"python_function\": {\"model_path\": \"model.pkl\", \"predict_fn\": \"predict\", \"loader_module\": \"mlflow.sklearn\", \"python_version\": \"3.12.7\", \"env\": {\"conda\": \"conda.yaml\", \"virtualenv\": \"python_env.yaml\"}}, \"sklearn\": {\"pickled_model\": \"model.pkl\", \"sklearn_version\": \"1.6.1\", \"serialization_format\": \"cloudpickle\", \"code\": null}}}]",
+      "mlflow.runName": "angry-lark-326",
+      "mlflow.source.git.commit": "b94251c917f06ed2318c83e9d237cb450ba2d9e8",
+      "mlflow.source.name": "streamlitapplic.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC",
+      "training_duration_str": "0h 0m 31s"
+    }
+  }
+}

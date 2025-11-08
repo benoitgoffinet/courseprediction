@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/68d3d5b2546646ba902f2691e7159cf1/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '254481896612516389'
+lifecycle_stage: active
+run_id: 68d3d5b2546646ba902f2691e7159cf1
+run_name: righteous-roo-286
+run_uuid: 68d3d5b2546646ba902f2691e7159cf1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759148353860
+status: 1
+tags: []
+user_id: CePC

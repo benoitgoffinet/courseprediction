@@ -1,0 +1,40 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "c46b006651554123bc7e149cbce2a7b3",
+      "experiment_id": "985841577242864709",
+      "user_id": "CePC",
+      "status": "FINISHED",
+      "start_time": 1759237610743,
+      "end_time": 1759237611032,
+      "lifecycle_stage": "active",
+      "artifact_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/985841577242864709/c46b006651554123bc7e149cbce2a7b3/artifacts",
+      "run_name": "data_gof_26",
+      "_start_time": "2025-09-30 15:06:51",
+      "_end_time": "2025-09-30 15:06:51"
+    },
+    "params": {},
+    "metrics": {},
+    "tags": {
+      "mlflow.runName": "data_gof_26",
+      "mlflow.source.git.commit": "b94251c917f06ed2318c83e9d237cb450ba2d9e8",
+      "mlflow.source.name": "streamlitapplic.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC"
+    }
+  }
+}

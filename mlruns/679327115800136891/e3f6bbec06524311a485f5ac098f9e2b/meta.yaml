@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/679327115800136891/e3f6bbec06524311a485f5ac098f9e2b/artifacts
+end_time: 1759155219559
+entry_point_name: ''
+experiment_id: '679327115800136891'
+lifecycle_stage: active
+run_id: e3f6bbec06524311a485f5ac098f9e2b
+run_name: Entraînement_1
+run_uuid: e3f6bbec06524311a485f5ac098f9e2b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759155219502
+status: 3
+tags: []
+user_id: CePC

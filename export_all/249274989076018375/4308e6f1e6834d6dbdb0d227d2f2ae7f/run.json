@@ -1,0 +1,40 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "4308e6f1e6834d6dbdb0d227d2f2ae7f",
+      "experiment_id": "249274989076018375",
+      "user_id": "CePC",
+      "status": "FINISHED",
+      "start_time": 1761567899056,
+      "end_time": 1761567899156,
+      "lifecycle_stage": "active",
+      "artifact_uri": "mlflow-artifacts:/249274989076018375/4308e6f1e6834d6dbdb0d227d2f2ae7f/artifacts",
+      "run_name": "data_ Benoitgofadmin_1",
+      "_start_time": "2025-10-27 13:24:59",
+      "_end_time": "2025-10-27 13:24:59"
+    },
+    "params": {},
+    "metrics": {},
+    "tags": {
+      "mlflow.runName": "data_ Benoitgofadmin_1",
+      "mlflow.source.git.commit": "94414636219915218b6359753d87e35946dec0c5",
+      "mlflow.source.name": "app.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC"
+    }
+  }
+}

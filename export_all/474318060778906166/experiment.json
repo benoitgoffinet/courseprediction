@@ -1,0 +1,49 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_experiment.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "info": {
+    "num_total_runs": 10,
+    "num_ok_runs": 0,
+    "num_failed_runs": 10,
+    "failed_runs": [
+      "99d2260c63394ed1a1e20a247c46eaf8",
+      "d86425ffb611413e9c82e1348851d411",
+      "b166053846e84b749dca4c8d7aebdd17",
+      "30efe52a9f5245feb8a591758ed34eb8",
+      "3e22b588149940389b3a627c377a78d0",
+      "ccaecc5b02494ab7957a470098031551",
+      "4371319fadd646b8b5a9bc6d7d7566f1",
+      "35fa2ac659e948f895030860516d3532",
+      "09d32f774f904290862fda9aefda7085",
+      "c97f412612394e9591852fc2fb2c7998"
+    ]
+  },
+  "mlflow": {
+    "experiment": {
+      "experiment_id": "474318060778906166",
+      "name": "pipeline",
+      "artifact_location": "mlflow-artifacts:/474318060778906166",
+      "lifecycle_stage": "active",
+      "tags": {
+        "mlflow.experimentKind": "custom_model_development"
+      },
+      "creation_time": 1762439048271,
+      "last_update_time": 1762439048271,
+      "_creation_time": "2025-11-06 15:24:08",
+      "_last_update_time": "2025-11-06 15:24:08"
+    },
+    "runs": []
+  }
+}

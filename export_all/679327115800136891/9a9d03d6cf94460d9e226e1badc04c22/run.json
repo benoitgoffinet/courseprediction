@@ -1,0 +1,58 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "9a9d03d6cf94460d9e226e1badc04c22",
+      "experiment_id": "679327115800136891",
+      "user_id": "CePC",
+      "status": "RUNNING",
+      "start_time": 1759156742426,
+      "end_time": null,
+      "lifecycle_stage": "active",
+      "artifact_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/679327115800136891/9a9d03d6cf94460d9e226e1badc04c22/artifacts",
+      "run_name": "upbeat-vole-51",
+      "_start_time": "2025-09-29 16:39:02",
+      "_end_time": null
+    },
+    "params": {
+      "model__max_depth": "5",
+      "model__min_samples_split": "2",
+      "model__n_estimators": "300"
+    },
+    "metrics": {
+      "R2_Score_VC": [
+        {
+          "value": 0.9582669424379894,
+          "timestamp": 1759156742496,
+          "step": 0,
+          "model_id": null,
+          "dataset_name": null,
+          "dataset_digest": null,
+          "run_id": "9a9d03d6cf94460d9e226e1badc04c22"
+        }
+      ]
+    },
+    "tags": {
+      "mlflow.log-model.history": "[{\"run_id\": \"9a9d03d6cf94460d9e226e1badc04c22\", \"artifact_path\": \"gof_20\", \"utc_time_created\": \"2025-09-29 14:39:02.503705\", \"model_uuid\": \"9a39e0aaefea4c6383d0fb2e168cb1f4\", \"flavors\": {\"python_function\": {\"model_path\": \"model.pkl\", \"predict_fn\": \"predict\", \"loader_module\": \"mlflow.sklearn\", \"python_version\": \"3.12.7\", \"env\": {\"conda\": \"conda.yaml\", \"virtualenv\": \"python_env.yaml\"}}, \"sklearn\": {\"pickled_model\": \"model.pkl\", \"sklearn_version\": \"1.6.1\", \"serialization_format\": \"cloudpickle\", \"code\": null}}}]",
+      "mlflow.runName": "upbeat-vole-51",
+      "mlflow.source.git.commit": "b94251c917f06ed2318c83e9d237cb450ba2d9e8",
+      "mlflow.source.name": "streamlitapplic.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC",
+      "training_duration_str": "0h 0m 54s"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/249274989076018375/419af16d2cbc414ebae199b882174c02/artifacts
+end_time: 1762504473637
+entry_point_name: ''
+experiment_id: '249274989076018375'
+lifecycle_stage: active
+run_id: 419af16d2cbc414ebae199b882174c02
+run_name: data_ kiki_1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762504473548
+status: 3
+tags: []
+user_id: CePC

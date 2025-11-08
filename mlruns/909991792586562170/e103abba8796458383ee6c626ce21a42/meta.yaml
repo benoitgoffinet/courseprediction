@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/909991792586562170/e103abba8796458383ee6c626ce21a42/artifacts
+end_time: 1761298894178
+entry_point_name: ''
+experiment_id: '909991792586562170'
+lifecycle_stage: active
+run_id: e103abba8796458383ee6c626ce21a42
+run_name: data_ huhu_1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761298894045
+status: 3
+tags: []
+user_id: CePC

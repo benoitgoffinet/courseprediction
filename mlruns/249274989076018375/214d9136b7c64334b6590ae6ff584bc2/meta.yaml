@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/249274989076018375/214d9136b7c64334b6590ae6ff584bc2/artifacts
+end_time: 1762506191236
+entry_point_name: ''
+experiment_id: '249274989076018375'
+lifecycle_stage: active
+run_id: 214d9136b7c64334b6590ae6ff584bc2
+run_name: data_ lilo_1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762506191143
+status: 3
+tags: []
+user_id: CePC

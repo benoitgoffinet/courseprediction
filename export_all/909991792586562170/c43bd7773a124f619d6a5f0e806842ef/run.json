@@ -1,0 +1,57 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "c43bd7773a124f619d6a5f0e806842ef",
+      "experiment_id": "909991792586562170",
+      "user_id": "CePC",
+      "status": "FINISHED",
+      "start_time": 1761382200184,
+      "end_time": 1761382212980,
+      "lifecycle_stage": "active",
+      "artifact_uri": "mlflow-artifacts:/909991792586562170/c43bd7773a124f619d6a5f0e806842ef/artifacts",
+      "run_name": " gofro_2-pipeline",
+      "_start_time": "2025-10-25 10:50:00",
+      "_end_time": "2025-10-25 10:50:13"
+    },
+    "params": {
+      "model_type": "ElasticNet",
+      "model__alpha": "0.001",
+      "model__l1_ratio": "0.1"
+    },
+    "metrics": {
+      "R2_Score_VC": [
+        {
+          "value": 0.9720367521261906,
+          "timestamp": 1761382212884,
+          "step": 0,
+          "model_id": null,
+          "dataset_name": null,
+          "dataset_digest": null,
+          "run_id": "c43bd7773a124f619d6a5f0e806842ef"
+        }
+      ]
+    },
+    "tags": {
+      "mlflow.runName": " gofro_2-pipeline",
+      "mlflow.source.git.commit": "94414636219915218b6359753d87e35946dec0c5",
+      "mlflow.source.name": "app.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC",
+      "training_duration_str": "0h 0m 4s"
+    }
+  }
+}

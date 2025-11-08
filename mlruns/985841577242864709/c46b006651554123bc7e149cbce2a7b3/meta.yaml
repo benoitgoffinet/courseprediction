@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/985841577242864709/c46b006651554123bc7e149cbce2a7b3/artifacts
+end_time: 1759237611032
+entry_point_name: ''
+experiment_id: '985841577242864709'
+lifecycle_stage: active
+run_id: c46b006651554123bc7e149cbce2a7b3
+run_name: data_gof_26
+run_uuid: c46b006651554123bc7e149cbce2a7b3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759237610743
+status: 3
+tags: []
+user_id: CePC

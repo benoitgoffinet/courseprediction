@@ -1,0 +1,7 @@
+id: entrainement_modele
+namespace: mlops
+tasks:
+  - id: lancer_train
+    type: io.kestra.core.tasks.scripts.Bash
+    commands:
+      - "python train/train.py"

@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/474318060778906166/3e22b588149940389b3a627c377a78d0/artifacts
+end_time: 1762509799274
+entry_point_name: ''
+experiment_id: '474318060778906166'
+lifecycle_stage: active
+run_id: 3e22b588149940389b3a627c377a78d0
+run_name: ' bestman_4-pipeline'
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762509799109
+status: 3
+tags: []
+user_id: CePC

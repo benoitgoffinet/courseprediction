@@ -1,0 +1,40 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "d6724b7d35a245c2b1d6e5193b506139",
+      "experiment_id": "679327115800136891",
+      "user_id": "CePC",
+      "status": "FINISHED",
+      "start_time": 1759146473902,
+      "end_time": 1759146473958,
+      "lifecycle_stage": "active",
+      "artifact_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/679327115800136891/d6724b7d35a245c2b1d6e5193b506139/artifacts",
+      "run_name": "Entra\u00eenement_1",
+      "_start_time": "2025-09-29 13:47:54",
+      "_end_time": "2025-09-29 13:47:54"
+    },
+    "params": {},
+    "metrics": {},
+    "tags": {
+      "mlflow.runName": "Entra\u00eenement_1",
+      "mlflow.source.git.commit": "b94251c917f06ed2318c83e9d237cb450ba2d9e8",
+      "mlflow.source.name": "train/train.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC"
+    }
+  }
+}

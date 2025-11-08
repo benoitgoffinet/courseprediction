@@ -1,0 +1,58 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "c7156c68380a426bb39714f1112312c7",
+      "experiment_id": "985841577242864709",
+      "user_id": "CePC",
+      "status": "RUNNING",
+      "start_time": 1759232845097,
+      "end_time": null,
+      "lifecycle_stage": "active",
+      "artifact_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/985841577242864709/c7156c68380a426bb39714f1112312c7/artifacts",
+      "run_name": "nervous-gull-314",
+      "_start_time": "2025-09-30 13:47:25",
+      "_end_time": null
+    },
+    "params": {
+      "model__max_depth": "5",
+      "model__min_samples_split": "3",
+      "model__n_estimators": "300"
+    },
+    "metrics": {
+      "R2_Score_VC": [
+        {
+          "value": 0.9457973504039069,
+          "timestamp": 1759232845169,
+          "step": 0,
+          "model_id": null,
+          "dataset_name": null,
+          "dataset_digest": null,
+          "run_id": "c7156c68380a426bb39714f1112312c7"
+        }
+      ]
+    },
+    "tags": {
+      "mlflow.log-model.history": "[{\"run_id\": \"c7156c68380a426bb39714f1112312c7\", \"artifact_path\": \"mikado_2\", \"utc_time_created\": \"2025-09-30 11:47:25.183245\", \"model_uuid\": \"4af39e73837c41f79dc275667ba12856\", \"flavors\": {\"python_function\": {\"model_path\": \"model.pkl\", \"predict_fn\": \"predict\", \"loader_module\": \"mlflow.sklearn\", \"python_version\": \"3.12.7\", \"env\": {\"conda\": \"conda.yaml\", \"virtualenv\": \"python_env.yaml\"}}, \"sklearn\": {\"pickled_model\": \"model.pkl\", \"sklearn_version\": \"1.6.1\", \"serialization_format\": \"cloudpickle\", \"code\": null}}}]",
+      "mlflow.runName": "nervous-gull-314",
+      "mlflow.source.git.commit": "b94251c917f06ed2318c83e9d237cb450ba2d9e8",
+      "mlflow.source.name": "streamlitapplic.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC",
+      "training_duration_str": "0h 0m 54s"
+    }
+  }
+}

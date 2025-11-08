@@ -1,0 +1,40 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "2386bd5fc05c4025a9c7f0a4b41c69f8",
+      "experiment_id": "909991792586562170",
+      "user_id": "CePC",
+      "status": "FINISHED",
+      "start_time": 1762507271849,
+      "end_time": 1762507271983,
+      "lifecycle_stage": "active",
+      "artifact_uri": "mlflow-artifacts:/909991792586562170/2386bd5fc05c4025a9c7f0a4b41c69f8/artifacts",
+      "run_name": "data_ chlag_1",
+      "_start_time": "2025-11-07 10:21:12",
+      "_end_time": "2025-11-07 10:21:12"
+    },
+    "params": {},
+    "metrics": {},
+    "tags": {
+      "mlflow.runName": "data_ chlag_1",
+      "mlflow.source.git.commit": "4a277bee99df38c90eeb22d305e74b92d0ebdfc1",
+      "mlflow.source.name": "app.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC"
+    }
+  }
+}

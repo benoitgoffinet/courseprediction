@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/7f29da8979224058a0cef273908b19fe/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '254481896612516389'
+lifecycle_stage: active
+run_id: 7f29da8979224058a0cef273908b19fe
+run_name: wistful-ox-585
+run_uuid: 7f29da8979224058a0cef273908b19fe
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759148065015
+status: 1
+tags: []
+user_id: CePC

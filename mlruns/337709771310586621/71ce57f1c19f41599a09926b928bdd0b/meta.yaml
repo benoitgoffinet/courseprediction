@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/337709771310586621/71ce57f1c19f41599a09926b928bdd0b/artifacts
+deleted_time: 1761561977338
+end_time: 1761560380591
+entry_point_name: ''
+experiment_id: '337709771310586621'
+lifecycle_stage: deleted
+run_id: 71ce57f1c19f41599a09926b928bdd0b
+run_name: message_ gofro_20251027_111940
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761560380498
+status: 4
+tags: []
+user_id: CePC

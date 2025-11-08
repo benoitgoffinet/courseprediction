@@ -1,0 +1,76 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_experiments.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "info": {
+    "duration": 11.3,
+    "experiments": 7,
+    "total_runs": 341,
+    "ok_runs": 122,
+    "failed_runs": 219
+  },
+  "mlflow": {
+    "experiments": [
+      {
+        "id": "474318060778906166",
+        "name": "pipeline",
+        "ok_runs": 0,
+        "failed_runs": 10,
+        "duration": 0.3
+      },
+      {
+        "id": "249274989076018375",
+        "name": "CourseAPied_Experienceid",
+        "ok_runs": 0,
+        "failed_runs": 106,
+        "duration": 1.9
+      },
+      {
+        "id": "337709771310586621",
+        "name": "Message",
+        "ok_runs": 0,
+        "failed_runs": 2,
+        "duration": 0.1
+      },
+      {
+        "id": "909991792586562170",
+        "name": "CourseAPied_Experience",
+        "ok_runs": 0,
+        "failed_runs": 101,
+        "duration": 2.1
+      },
+      {
+        "id": "985841577242864709",
+        "name": "Datasets",
+        "ok_runs": 47,
+        "failed_runs": 0,
+        "duration": 3.1
+      },
+      {
+        "id": "679327115800136891",
+        "name": "Mon_Exp\u00e9rience_ML",
+        "ok_runs": 75,
+        "failed_runs": 0,
+        "duration": 3.8
+      },
+      {
+        "id": "0",
+        "name": "Default",
+        "ok_runs": 0,
+        "failed_runs": 0,
+        "duration": 0.0
+      }
+    ]
+  }
+}

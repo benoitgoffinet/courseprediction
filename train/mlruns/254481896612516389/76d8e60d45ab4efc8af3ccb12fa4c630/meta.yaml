@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/76d8e60d45ab4efc8af3ccb12fa4c630/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '254481896612516389'
+lifecycle_stage: active
+run_id: 76d8e60d45ab4efc8af3ccb12fa4c630
+run_name: big-yak-685
+run_uuid: 76d8e60d45ab4efc8af3ccb12fa4c630
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759151364059
+status: 1
+tags: []
+user_id: CePC

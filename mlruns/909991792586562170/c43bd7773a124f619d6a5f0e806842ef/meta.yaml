@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/909991792586562170/c43bd7773a124f619d6a5f0e806842ef/artifacts
+end_time: 1761382212980
+entry_point_name: ''
+experiment_id: '909991792586562170'
+lifecycle_stage: active
+run_id: c43bd7773a124f619d6a5f0e806842ef
+run_name: ' gofro_2-pipeline'
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761382200184
+status: 3
+tags: []
+user_id: CePC

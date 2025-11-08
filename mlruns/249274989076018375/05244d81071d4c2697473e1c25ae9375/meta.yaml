@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/249274989076018375/05244d81071d4c2697473e1c25ae9375/artifacts
+end_time: 1762506109720
+entry_point_name: ''
+experiment_id: '249274989076018375'
+lifecycle_stage: active
+run_id: 05244d81071d4c2697473e1c25ae9375
+run_name: data_ romulus_1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762506109618
+status: 3
+tags: []
+user_id: CePC

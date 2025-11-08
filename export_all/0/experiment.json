@@ -1,0 +1,36 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_experiment.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "info": {
+    "num_total_runs": 0,
+    "num_ok_runs": 0,
+    "num_failed_runs": 0,
+    "failed_runs": []
+  },
+  "mlflow": {
+    "experiment": {
+      "experiment_id": "0",
+      "name": "Default",
+      "artifact_location": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns/0",
+      "lifecycle_stage": "active",
+      "tags": {},
+      "creation_time": 1759141386942,
+      "last_update_time": 1759141386942,
+      "_creation_time": "2025-09-29 12:23:07",
+      "_last_update_time": "2025-09-29 12:23:07"
+    },
+    "runs": []
+  }
+}

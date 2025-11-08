@@ -1,0 +1,40 @@
+{
+  "system": {
+    "package_version": "1.2.0",
+    "script": "export_run.py",
+    "export_time": 1762520698,
+    "_export_time": "2025-11-07 13:04:58",
+    "mlflow_version": "3.5.1",
+    "mlflow_tracking_uri": "file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/app/mlruns",
+    "platform": {
+      "python_version": "3.12.7",
+      "system": "Windows",
+      "processor": "AMD64 Family 23 Model 104 Stepping 1, AuthenticAMD"
+    },
+    "user": "CePC"
+  },
+  "mlflow": {
+    "info": {
+      "run_id": "ad958d9619dd4c4a98752324dc21a797",
+      "experiment_id": "909991792586562170",
+      "user_id": "CePC",
+      "status": "FAILED",
+      "start_time": 1761381393354,
+      "end_time": 1761381393467,
+      "lifecycle_stage": "active",
+      "artifact_uri": "mlflow-artifacts:/909991792586562170/ad958d9619dd4c4a98752324dc21a797/artifacts",
+      "run_name": "contact_message",
+      "_start_time": "2025-10-25 10:36:33",
+      "_end_time": "2025-10-25 10:36:33"
+    },
+    "params": {},
+    "metrics": {},
+    "tags": {
+      "mlflow.runName": "contact_message",
+      "mlflow.source.git.commit": "94414636219915218b6359753d87e35946dec0c5",
+      "mlflow.source.name": "app.py",
+      "mlflow.source.type": "LOCAL",
+      "mlflow.user": "CePC"
+    }
+  }
+}

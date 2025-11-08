@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/909991792586562170/738ed1a823ea41c9802e1f88cef9fb2d/artifacts
+end_time: 1761391766120
+entry_point_name: ''
+experiment_id: '909991792586562170'
+lifecycle_stage: active
+run_id: 738ed1a823ea41c9802e1f88cef9fb2d
+run_name: data_ maminou_1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761391765986
+status: 3
+tags: []
+user_id: CePC

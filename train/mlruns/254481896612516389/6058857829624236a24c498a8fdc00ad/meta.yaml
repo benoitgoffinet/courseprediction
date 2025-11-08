@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/train/mlruns/254481896612516389/6058857829624236a24c498a8fdc00ad/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '254481896612516389'
+lifecycle_stage: active
+run_id: 6058857829624236a24c498a8fdc00ad
+run_name: merciful-kite-458
+run_uuid: 6058857829624236a24c498a8fdc00ad
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759148167746
+status: 1
+tags: []
+user_id: CePC

@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/474318060778906166/c97f412612394e9591852fc2fb2c7998/artifacts
+end_time: 1762439048482
+entry_point_name: ''
+experiment_id: '474318060778906166'
+lifecycle_stage: active
+run_id: c97f412612394e9591852fc2fb2c7998
+run_name: ' Benoitgofadmin_3-pipeline'
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762439048304
+status: 3
+tags: []
+user_id: CePC

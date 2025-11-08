@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/CePC/projetdemission/projetsrtrava/courseapied/mlruns/985841577242864709/de26271683d040599f842753a3698ea8/artifacts
+end_time: 1759238431038
+entry_point_name: ''
+experiment_id: '985841577242864709'
+lifecycle_stage: active
+run_id: de26271683d040599f842753a3698ea8
+run_name: data_mikado_8
+run_uuid: de26271683d040599f842753a3698ea8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759238430720
+status: 3
+tags: []
+user_id: CePC
