@@ -4,6 +4,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements.txt
+ARG GIT_SHA=dev
+RUN echo $GIT_SHA > /app/version.txt
 COPY . /app
 EXPOSE 8501
 CMD ["bash", "-lc", "streamlit run app.py --server.address 0.0.0.0 --server.port ${PORT}"]
