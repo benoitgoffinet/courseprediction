@@ -5,58 +5,93 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Empêche les déploiements qui se chevauchent sur la même app
+concurrency:
+  group: deploy-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
 env:
-  ACR_NAME: coursepredacr123
-  IMAGE_NAME: courseprediction
-  WEBAPP_NAME: coursepred-webapp-xyz
-  RESOURCE_GROUP: predictioncourse_group
+  ACR_NAME: coursepredacr123               # Nom de ton ACR (sans .azurecr.io)
+  IMAGE_NAME: courseprediction             # Nom du repo d'image dans ACR
+  WEBAPP_NAME: coursepred-webapp-xyz       # Nom de l'Azure Web App (Linux, container)
+  RESOURCE_GROUP: predictioncourse_group    # Resource group de la Web App
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Azure login
         uses: azure/login@v2
         with:
+          # Service principal JSON (format AZ CLI) stocké dans le secret
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: ACR login
-        run: az acr login --name $ACR_NAME
+      # Connexion au registre pour push (côté GitHub runner)
+      - name: ACR login (for docker push)
+        run: az acr login --name "$ACR_NAME"
 
+      # Calcule les tags d'image (immutables) et le nom complet
+      - name: Compute image metadata
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "TAG=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "IMAGE=${ACR_NAME}.azurecr.io/${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "Will build: ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${SHORT_SHA} and :latest"
+
+      # Build multi-tag + push (le push du tag immuable d'abord)
       - name: Build & Push image
         run: |
-          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:latest .
-          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:latest
+          docker build \
+            -t "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}" \
+            -t "${{ steps.meta.outputs.IMAGE }}:latest" \
+            .
+          docker push "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}"
+          docker push "${{ steps.meta.outputs.IMAGE }}:latest"
 
-      # ⬇️ Récupère les identifiants ACR (admin doit être activé sur l'ACR)
-      - name: Get ACR credentials
+      # ⚠️ Nécessite l'option "Admin user" activée sur l'ACR
+      - name: Get ACR admin credentials
         id: acrcreds
         run: |
-          USER=$(az acr credential show -n $ACR_NAME --query username -o tsv)
-          PASS=$(az acr credential show -n $ACR_NAME --query "passwords[0].value" -o tsv)
-          echo "USER=$USER"   >> $GITHUB_OUTPUT
-          echo "PASS=$PASS"   >> $GITHUB_OUTPUT
+          USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
+          PASS=$(az acr credential show -n "$ACR_NAME" --query "passwords[0].value" -o tsv)
+          echo "USER=$USER" >> $GITHUB_OUTPUT
+          echo "PASS=$PASS" >> $GITHUB_OUTPUT
 
-      # ⬇️ Configure la Web App pour tirer l'image depuis l'ACR (nouvelles options)
-      - name: Configure Web App container
+      # Pointe la Web App vers le tag immuable (pas :latest) et configure le registre
+      - name: Configure Web App container to immutable tag
         run: |
           az webapp config container set \
-            -g $RESOURCE_GROUP -n $WEBAPP_NAME \
-            --container-image-name $ACR_NAME.azurecr.io/$IMAGE_NAME:latest \
-            --container-registry-url https://$ACR_NAME.azurecr.io \
-            --container-registry-user ${{ steps.acrcreds.outputs.USER }} \
-            --container-registry-password ${{ steps.acrcreds.outputs.PASS }}
+            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
+            --container-image-name "${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}" \
+            --container-registry-url "https://${ACR_NAME}.azurecr.io" \
+            --container-registry-user "${{ steps.acrcreds.outputs.USER }}" \
+            --container-registry-password "${{ steps.acrcreds.outputs.PASS }}"
 
+      # Tes App Settings (ajoute/ajuste selon besoin)
       - name: Set App Settings
         run: |
-          az webapp config appsettings set -g $RESOURCE_GROUP -n $WEBAPP_NAME --settings \
-            WEBSITES_PORT=8501 \
-            USE_AZURE_MLFLOW=1 \
-            MLFLOW_TRACKING_URI="azureml://canadacentral.api.azureml.ms/mlflow/v1.0/subscriptions/b115f392-8b15-499a-a548-edd84815dbcb/resourceGroups/predictioncourse_group/providers/Microsoft.MachineLearningServices/workspaces/courseapied-ws"
+          az webapp config appsettings set \
+            -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
+            --settings \
+              WEBSITES_PORT=8501 \
+              USE_AZURE_MLFLOW=1 \
+              MLFLOW_TRACKING_URI="azureml://canadacentral.api.azureml.ms/mlflow/v1.0/subscriptions/b115f392-8b15-499a-a548-edd84815dbcb/resourceGroups/predictioncourse_group/providers/Microsoft.MachineLearningServices/workspaces/courseapied-ws"
 
+      # Redémarre pour tirer la nouvelle image
       - name: Restart Web App
+        run: az webapp restart -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
+
+      # Petite vérification : affiche l'image effective côté Web App
+      - name: Show effective container config
         run: |
-          az webapp restart -g $RESOURCE_GROUP -n $WEBAPP_NAME
+          az webapp config container show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
+          echo "Expecting image: ${{ steps.meta.outputs.IMAGE }}:${{ steps.meta.outputs.TAG }}"
