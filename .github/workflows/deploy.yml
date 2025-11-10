@@ -90,11 +90,59 @@ jobs:
             --set properties.acrUseManagedIdentityCreds=true
       - name: Ensure system-assigned identity is ON
         run: az webapp identity assign -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
-      - name: Grant AcrPull to WebApp identity
+        
+      - name: Grant AcrPull to WebApp identity (idempotent + retry)
+        shell: bash
+        env:
+          RG: ${{ env.RESOURCE_GROUP }}
+          WEBAPP: ${{ env.WEBAPP_NAME }}
+          ACR: ${{ env.ACR_NAME }}
         run: |
-           ACR_ID=$(az acr show -n "$ACR_NAME" --query id -o tsv)
-           PRINCIPAL_ID=$(az webapp identity show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" --query principalId -o tsv)
-           az role assignment create --assignee "$PRINCIPAL_ID" --role AcrPull --scope "$ACR_ID"
+          set -euo pipefail
+          az account show -o table
+          ACR_ID=$(az acr show -n "$ACR" --query id -o tsv)
+          PRINCIPAL_ID=$(az webapp identity show -g "$RG" -n "$WEBAPP" --query principalId -o tsv)
+          if [ -z "$PRINCIPAL_ID" ]; then
+             echo "WebApp identity principalId introuvable. Réessaie après 30s."
+             exit 1
+          fi
+          HAS=$(az role assignment list \
+           --assignee "$PRINCIPAL_ID" \
+           --scope "$ACR_ID" \
+           --query "[?roleDefinitionName=='AcrPull'] | length(@)" -o tsv)
+
+          if [ "$HAS" != "0" ]; then
+             echo "AcrPull est déjà attribué. OK."
+             exit 0
+          fi
+          for i in {1..8}; do
+            set +e
+            az role assignment create \
+              --assignee-object-id "$PRINCIPAL_ID" \
+              --assignee-principal-type ServicePrincipal \
+              --role AcrPull \
+              --scope "$ACR_ID"
+            RC=$?
+            set -e
+
+            if [ $RC -eq 0 ]; then
+                 echo "AcrPull attribué."
+                 break
+            fi
+
+            echo "Tentative $i/8 a échoué (code=$RC). Attente 15s et on réessaie…"
+            sleep 15
+          done
+          HAS=$(az role assignment list \
+             --assignee "$PRINCIPAL_ID" \
+             --scope "$ACR_ID" \
+             --query "[?roleDefinitionName=='AcrPull'] | length(@)" -o tsv)
+          if [ "$HAS" = "0" ]; then
+             echo "::error::Impossible d'attribuer AcrPull. Vérifie que l'identity du workflow possède le rôle 'User Access Administrator' ou 'Owner' au scope $ACR_ID"
+             echo "Astuce: lance ce job avec un principal qui a ces droits, ou fais l'assignation une fois via le Portail Azure."
+          exit 1
+          fi
+          echo "AcrPull OK."
       - name: Point Web App to image@digest
         run: |
           az webapp config container set \
