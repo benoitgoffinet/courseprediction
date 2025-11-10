@@ -213,7 +213,7 @@ if USE_AZURE:
 else:
     print("🟩 MLflow connecté au serveur local (127.0.0.1:5000)")
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
-    edd84815dbcb/resourceGroups/predictioncourse_group/providers/Microsoft.MachineLearningServices/workspaces/courseapied-ws")
+
     
 # Nom de la nouvelle expérience
 
