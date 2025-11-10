@@ -4,5 +4,6 @@ numpy
 scikit-learn
 category_encoders
 mlflow
+azureml-mlflow
 shap
 plotly
