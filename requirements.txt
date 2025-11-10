@@ -2,17 +2,17 @@
 streamlit>=1.31,<2
 plotly>=5.18,<6
 
-# Data science stack
+# DS stack
 pandas>=1.5,<3
-numpy>=1.23,<2
+numpy==1.26.4
 scikit-learn>=1.3,<1.6
 category_encoders>=2.6,<3
 shap>=0.45,<0.46
 
-# MLflow + Azure ML (versions compatibles)
+# MLflow + Azure ML (compatibles)
 mlflow==2.15.1
 azureml-mlflow==1.65.0
 
-# SDK Azure
+# Azure SDK
 azure-ai-ml>=1.8.0,<2
 azure-identity>=1.15.0,<2
