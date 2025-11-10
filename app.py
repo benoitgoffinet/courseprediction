@@ -195,21 +195,30 @@ def calculer_coef(row):
     return row["T/K"] - ndfperfathlete[col_moyenne].iloc[0]  # ou moyenne selon ton ndf
 
 
-# connexion à mlflow soit en ligne soit local
-AZURE_URI = (
-    "azureml://canadacentral.api.azureml.ms/mlflow/v1.0/"
-    "subscriptions/b115f392-8b15-499a-a548-edd84815dbcb/"
-    "resourceGroups/predictioncourse_group/"
-    "providers/Microsoft.MachineLearningServices/"
-    "workspaces/courseapied-ws"
-)
-
 # Par défaut, on utilise le serveur local (utile pour le dev)
 USE_AZURE = os.getenv("USE_AZURE_MLFLOW") == "1"
 
 if USE_AZURE:
-    print("🟦 MLflow connecté à Azure ML")
-    mlflow.set_tracking_uri(AZURE_URI)
+    print("🟦 Connexion à MLflow via Azure ML...")
+
+    # Initialise le client Azure ML explicitement
+    ml_client = MLClient(
+        credential=DefaultAzureCredential(),
+        subscription_id="b115f392-8b15-499a-a548-edd84815dbcb",
+        resource_group_name="predictioncourse_group",
+        workspace_name="courseapied-ws"
+    )
+
+    # Récupère le bon URI MLflow depuis Azure ML
+    workspace = ml_client.workspaces.get("courseapied-ws")
+    mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
+
+    # (Optionnel) tu peux aussi définir le registry
+    mlflow.set_registry_uri(workspace.mlflow_tracking_uri)
+
+    print("✅ MLflow connecté à Azure ML Workspace :", workspace.name)
+    print("URI :", mlflow.get_tracking_uri())
+
 else:
     print("🟩 MLflow connecté au serveur local (127.0.0.1:5000)")
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
