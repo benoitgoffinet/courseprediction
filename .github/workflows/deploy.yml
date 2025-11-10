@@ -88,7 +88,13 @@ jobs:
             -n "$WEBAPP_NAME" \
             --resource-type "Microsoft.Web/sites/config" \
             --set properties.acrUseManagedIdentityCreds=true
-
+      - name: Ensure system-assigned identity is ON
+        run: az webapp identity assign -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
+      - name: Grant AcrPull to WebApp identity
+        run: |
+           ACR_ID=$(az acr show -n "$ACR_NAME" --query id -o tsv)
+           PRINCIPAL_ID=$(az webapp identity show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" --query principalId -o tsv)
+           az role assignment create --assignee "$PRINCIPAL_ID" --role AcrPull --scope "$ACR_ID"
       - name: Point Web App to image@digest
         run: |
           az webapp config container set \
