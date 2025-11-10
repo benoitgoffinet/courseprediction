@@ -5,3 +5,4 @@ scikit-learn
 category_encoders
 mlflow
 shap
+plotly
