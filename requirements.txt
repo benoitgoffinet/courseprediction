@@ -7,3 +7,5 @@ mlflow
 azureml-mlflow
 shap
 plotly
+azure-ai-ml>=1.8.0
+azure-identity>=1.15.0
