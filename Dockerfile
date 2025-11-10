@@ -9,32 +9,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Outils nécessaires (compil si jamais, git pour certaines deps)
+# Outils + runtime OpenMP (scikit-learn / shap) + git
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc g++ git curl \
+    build-essential gcc g++ git curl libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# (1) Mettre pip/setuptools/wheel à jour (crucial pour wheels manylinux)
+# Pip/Setuptools/Wheel à jour = wheels manylinux utilisées au lieu de compiler
 RUN python -m pip install --upgrade pip setuptools wheel
 
-# (2) Debug: afficher les versions de wheels disponibles AVANT install
-#     -> si ça échoue ici on voit clairement où ça bloque
-RUN python -m pip index versions numpy || true
-RUN python -m pip index versions scikit-learn || true
-RUN python -m pip index versions shap || true
-RUN python -m pip index versions mlflow || true
-RUN python -m pip index versions azureml-mlflow || true
-
-# (3) Pré-installer les lourds en wheels uniquement
+# (1) Pré-installer les lourds en wheels uniquement (évite la compilation)
 RUN pip install --only-binary=:all: --prefer-binary \
     "numpy==1.26.4" \
-    "scikit-learn>=1.3,<1.6"
+    "scikit-learn>=1.3,<1.6" \
+    "shap>=0.45,<0.46"
 
-# (4) Installer le reste, en verbeux pour capter l’erreur précise
+# (2) Installer le reste
 COPY requirements.txt /app/requirements.txt
-RUN pip install -v --prefer-binary -r /app/requirements.txt
+RUN pip install --prefer-binary -r /app/requirements.txt
 
-# (5) Version & app
 ARG GIT_SHA=dev
 RUN echo $GIT_SHA > /app/version.txt
 COPY . /app
