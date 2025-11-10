@@ -265,10 +265,10 @@ if "identification_echec" not in st.session_state:
     st.session_state.identification_echec = 0
 
 if "ndf" not in st.session_state:
-    st.session_state.ndf = get_data("../data/ndfs.pkl", exp_name)
+    st.session_state.ndf = get_data("data/ndfs.pkl", exp_name)
 
 if "idf" not in st.session_state:
-    st.session_state.identification_idf = get_data("../data/idf.pkl", exp_nameid)
+    st.session_state.identification_idf = get_data("data/idf.pkl", exp_nameid)
 
 if "suite" not in st.session_state:
     st.session_state.suite = 0
