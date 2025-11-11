@@ -56,7 +56,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.REPO }}:${{ steps.meta.outputs.TAG }}
           provenance: false
-          # Force un build frais une fois (tu peux remettre à false ensuite)
           no-cache: true
           build-args: |
             GIT_SHA=${{ github.sha }}
@@ -70,17 +69,24 @@ jobs:
     environment:
       name: production
       url: https://${{ env.WEBAPP_NAME }}.azurewebsites.net
+
     steps:
       - name: Azure login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: App settings (port + disable ACR CD)
+      - name: App settings (port + startup timeout)
         run: |
           az webapp config appsettings set \
             -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
-            --settings DOCKER_ENABLE_CI=false WEBSITES_PORT=${EXPOSED_PORT}
+            --settings DOCKER_ENABLE_CI=false \
+                       WEBSITES_PORT=${EXPOSED_PORT} \
+                       PORT=${EXPOSED_PORT} \
+                       WEBSITES_CONTAINER_START_TIME_LIMIT=1800
+
+      - name: Configurer le health check path (Streamlit)
+        run: az webapp update -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" --set healthCheckPath="/healthz"
 
       - name: Use Managed Identity for ACR pulls
         run: |
@@ -112,11 +118,10 @@ jobs:
             --assignee "$PRINCIPAL_ID" \
             --scope "$ACR_ID" \
             --query "[?roleDefinitionName=='AcrPull'] | length(@)" -o tsv)
-
           if [ "$HAS" != "0" ]; then
             echo "AcrPull est déjà attribué. OK."
           else
-            for i in {1..8}; do
+            for i in $(seq 1 8); do
               set +e
               az role assignment create \
                 --assignee-object-id "$PRINCIPAL_ID" \
@@ -125,24 +130,20 @@ jobs:
                 --scope "$ACR_ID"
               RC=$?
               set -e
-
               if [ $RC -eq 0 ]; then
                 echo "AcrPull attribué."
                 break
               fi
-
-              echo "Tentative $i/8 a échoué (code=$RC). Attente 15s et on réessaie…"
+              echo "Tentative $i/8 échouée (code=$RC). Attente 15s et on réessaie…"
               sleep 15
             done
           fi
-
           HAS=$(az role assignment list \
             --assignee "$PRINCIPAL_ID" \
             --scope "$ACR_ID" \
             --query "[?roleDefinitionName=='AcrPull'] | length(@)" -o tsv)
           if [ "$HAS" = "0" ]; then
-            echo "::error::Impossible d'attribuer AcrPull. Vérifie que l'identity du workflow possède le rôle 'User Access Administrator' ou 'Owner' au scope $ACR_ID"
-            echo "Astuce: lance ce job avec un principal qui a ces droits, ou fais l'assignation une fois via le Portail Azure."
+            echo "::error::Impossible d'attribuer AcrPull. Vérifie les droits du principal (User Access Administrator ou Owner sur $ACR_ID)"
             exit 1
           fi
           echo "AcrPull OK."
@@ -153,7 +154,6 @@ jobs:
             -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" \
             --container-image-name "${{ needs.build.outputs.repo }}@${{ needs.build.outputs.digest }}" \
             --container-registry-url "https://${{ needs.build.outputs.reg }}"
-            # (si supporté) --acr-identity system
 
       - name: Restart
         run: az webapp restart -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME"
@@ -163,21 +163,25 @@ jobs:
           echo "Expecting ${{ needs.build.outputs.repo }}@${{ needs.build.outputs.digest }}"
           az webapp show -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" --query siteConfig.linuxFxVersion -o tsv
 
-      - name: Health check (avec retry)
+      - name: Health check (retry with backoff)
         shell: bash
         env:
-          ENVIRONMENT_URL: https://${{ env.WEBAPP_NAME }}.azurewebsites.net
+          ENVIRONMENT_URL: https://${{ env.WEBAPP_NAME }}.azurewebsites.net/healthz
         run: |
           set -euo pipefail
-          for i in {1..30}; do
-            if curl -fsSL "$ENVIRONMENT_URL" >/dev/null; then
-              echo "App OK ✅"
+          echo "Checking $ENVIRONMENT_URL ..."
+          for i in $(seq 1 40); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "$ENVIRONMENT_URL" || echo 000)
+            if [ "$CODE" = "200" ]; then
+              echo "✅ App OK — HTTP $CODE ($ENVIRONMENT_URL)"
               exit 0
             fi
-            echo "En attente du warm-up… ($i/30)"
-            sleep 5
+            echo "En attente du warm-up… tentative $i/40 — HTTP $CODE"
+            SLEEP=$((5 + (i-1)*5))
+            if [ $SLEEP -gt 30 ]; then SLEEP=30; fi
+            sleep $SLEEP
           done
-          echo "::error::L’application ne répond pas à $ENVIRONMENT_URL dans le temps imparti."
+          echo "::error::L’application ne répond toujours pas (dernier code HTTP : $CODE)"
           exit 1
 
       - name: Ajouter le résumé du déploiement
@@ -198,7 +202,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Tue les jobs enfants de ce shell (souvent des python lancés par az/SDK)
           jobs -pr | xargs -r kill || true
           sleep 2
           jobs -pr | xargs -r kill -9 || true
