@@ -32,4 +32,4 @@ RUN echo $GIT_SHA > /app/version.txt
 COPY . /app
 
 EXPOSE 8501
-CMD ["bash", "-lc", "streamlit run app.py --server.address 0.0.0.0 --server.port ${PORT}"]
+CMD ["streamlit","run","app.py","--server.address=0.0.0.0","--server.port=${PORT:-8501}","--server.headless=true"]
