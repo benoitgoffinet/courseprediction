@@ -86,7 +86,11 @@ jobs:
                        WEBSITES_CONTAINER_START_TIME_LIMIT=1800
 
       - name: Configurer le health check path (Streamlit)
-        run: az webapp update -g "$RESOURCE_GROUP" -n "$WEBAPP_NAME" --set healthCheckPath="/healthz"
+        run: |
+            az webapp update \
+            -g "$RESOURCE_GROUP" \
+            -n "$WEBAPP_NAME" \
+            --set siteConfig.healthCheckPath="/healthz"
 
       - name: Use Managed Identity for ACR pulls
         run: |
