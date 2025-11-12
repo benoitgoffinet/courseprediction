@@ -195,8 +195,8 @@ def submit(ndf, athlete):
       # Définir le chemin complet du fichier
       filepath = os.path.join("data", "ndf.pkl")
       # Sauvegarder la valeur dans le fichier pickle
-          with open(filepath, "wb") as f:
-                pickle.dump(st.session_state.identification_ndf, f)
+      with open(filepath, "wb") as f:
+         pickle.dump(st.session_state.identification_ndf, f)
 # Sélection dynamique de la bonne colonne en fonction de la distance
 def calculer_coef(row):
     col_moyenne = col_map[row["Distance"]]
