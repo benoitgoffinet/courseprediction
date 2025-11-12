@@ -196,7 +196,7 @@ def submit(ndf, athlete):
       filepath = os.path.join("data", "ndf.pkl")
       # Sauvegarder la valeur dans le fichier pickle
       with open(filepath, "wb") as f:
-         pickle.dump(st.session_state.identification_ndf, f)
+         pickle.dump(st.session_state.ndf, f)
 # Sélection dynamique de la bonne colonne en fonction de la distance
 def calculer_coef(row):
     col_moyenne = col_map[row["Distance"]]
@@ -825,7 +825,7 @@ if st.session_state.identification == 1:
            filepath = os.path.join("data", "ndf.pkl")
            # Sauvegarder la valeur dans le fichier pickle
            with open(filepath, "wb") as f:
-                pickle.dump(st.session_state.identification_ndf, f)
+                pickle.dump(st.session_state.ndf, f)
            st.session_state.supprimer = 0
   distance = st.session_state.distance  
   max_count = athlete_df['Distance'].value_counts().max()
