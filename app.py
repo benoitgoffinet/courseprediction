@@ -191,39 +191,32 @@ def submit(ndf, athlete):
       athlete_count = len(athlete_df)
       run_name = f"data_{athlete}_{athlete_count}"
       log_dataframe_to_mlflow(ndf, run_name, exp_name)
+      os.makedirs("data", exist_ok=True)
+      # Définir le chemin complet du fichier
+      filepath = os.path.join("data", "ndf.pkl")
+      # Sauvegarder la valeur dans le fichier pickle
+          with open(filepath, "wb") as f:
+                pickle.dump(st.session_state.identification_ndf, f)
 # Sélection dynamique de la bonne colonne en fonction de la distance
 def calculer_coef(row):
     col_moyenne = col_map[row["Distance"]]
     return row["T/K"] - ndfperfathlete[col_moyenne].iloc[0]  # ou moyenne selon ton ndf
 
 
-# Par défaut, on utilise le serveur local (utile pour le dev)
-USE_AZURE = os.getenv("USE_AZURE_MLFLOW") == "1"
-
-if USE_AZURE:
-    print("🟦 Connexion à MLflow via Azure ML...")
-
     # Initialise le client Azure ML explicitement
-    ml_client = MLClient(
+ml_client = MLClient(
         credential=DefaultAzureCredential(),
         subscription_id="b115f392-8b15-499a-a548-edd84815dbcb",
         resource_group_name="predictioncourse_group",
         workspace_name="courseapied-ws"
-    )
+         )
 
-    # Récupère le bon URI MLflow depuis Azure ML
-    workspace = ml_client.workspaces.get("courseapied-ws")
-    mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
+# Récupère le bon URI MLflow depuis Azure ML
+workspace = ml_client.workspaces.get("courseapied-ws")
+mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
 
-    # (Optionnel) tu peux aussi définir le registry
-    mlflow.set_registry_uri(workspace.mlflow_tracking_uri)
-
-    print("✅ MLflow connecté à Azure ML Workspace :", workspace.name)
-    print("URI :", mlflow.get_tracking_uri())
-
-else:
-    print("🟩 MLflow connecté au serveur local (127.0.0.1:5000)")
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+# (Optionnel) tu peux aussi définir le registry
+mlflow.set_registry_uri(workspace.mlflow_tracking_uri)
 
     
 # Nom de la nouvelle expérience
@@ -346,6 +339,12 @@ if st.session_state.identification == 0:
                  nrun_name = f"data_{athlete}_{1}"
                  log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
                  st.session_state.identification_idf = idf
+                 os.makedirs("data", exist_ok=True)
+                 # Définir le chemin complet du fichier
+                 filepath = os.path.join("data", "idf.pkl")
+                 # Sauvegarder la valeur dans le fichier pickle
+                 with open(filepath, "wb") as f:
+                    pickle.dump(st.session_state.identification_idf, f)
               else:
                  st.warning("Répondez à la question")
         if (len(athlete_df)) == 1 :
@@ -364,6 +363,12 @@ if st.session_state.identification == 0:
                    nrun_name = f"data_{athlete}_{1}"
                    log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
                    st.session_state.identification_idf = idf
+                   os.makedirs("data", exist_ok=True)
+                   # Définir le chemin complet du fichier
+                   filepath = os.path.join("data", "idf.pkl")
+                   # Sauvegarder la valeur dans le fichier pickle
+                   with open(filepath, "wb") as f:
+                      pickle.dump(st.session_state.identification_idf, f)
                    
               else:  
                     base = athlete_df.iloc[0]['Code']
@@ -377,6 +382,12 @@ if st.session_state.identification == 0:
                     nrun_name = f"data_{athlete}_{1}"
                     log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
                     st.session_state.identification_idf = idf
+                    os.makedirs("data", exist_ok=True)
+                    # Définir le chemin complet du fichier
+                    filepath = os.path.join("data", "idf.pkl")
+                    # Sauvegarder la valeur dans le fichier pickle
+                    with open(filepath, "wb") as f:
+                           pickle.dump(st.session_state.identification_idf, f)
               if st.session_state.identification_echec == 1:
                     st.warning("Vous avez oublié votre code? Répondez à la question")
                     nquestion = st.selectbox(
@@ -659,6 +670,12 @@ if st.session_state.identification == 1:
      nrun_name = f"data_{athlete}_{1}"
      log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
      st.session_state.identification_idf = idf
+     os.makedirs("data", exist_ok=True)
+     # Définir le chemin complet du fichier
+     filepath = os.path.join("data", "idf.pkl")
+     # Sauvegarder la valeur dans le fichier pickle
+     with open(filepath, "wb") as f:
+         pickle.dump(st.session_state.identification_idf, f)
 
 #entrainement model(a retirer quand suffisamment de data avec variable datascoremoyenne) = laisser seulement lentrainement dans admin
      ndf = st.session_state.ndf 
@@ -802,6 +819,12 @@ if st.session_state.identification == 1:
            athlete_count = len(athlete_df)
            run_name = f"data_{athlete}_{athlete_count}"
            log_dataframe_to_mlflow(ndf, run_name, exp_name)
+           os.makedirs("data", exist_ok=True)
+            # Définir le chemin complet du fichier
+           filepath = os.path.join("data", "ndf.pkl")
+           # Sauvegarder la valeur dans le fichier pickle
+           with open(filepath, "wb") as f:
+                pickle.dump(st.session_state.identification_ndf, f)
            st.session_state.supprimer = 0
   distance = st.session_state.distance  
   max_count = athlete_df['Distance'].value_counts().max()
@@ -864,6 +887,12 @@ if st.session_state.identification == 1:
              nrun_name = f"data_{athlete}_{1}"
              log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
              st.session_state.identification_idf = idf
+             os.makedirs("data", exist_ok=True)
+              # Définir le chemin complet du fichier
+             filepath = os.path.join("data", "idf.pkl")
+              # Sauvegarder la valeur dans le fichier pickle
+             with open(filepath, "wb") as f:
+                pickle.dump(st.session_state.identification_idf, f)
 
 
 if st.session_state.page == "Statistiques":
@@ -1067,6 +1096,12 @@ if st.session_state.page == "contact":
         nrun_name = f"data_{athlete}_{1}"
         log_dataframe_to_mlflow(idf, nrun_name, exp_nameid)
         st.session_state.identification_idf = idf
+        os.makedirs("data", exist_ok=True)
+        # Définir le chemin complet du fichier
+        filepath = os.path.join("data", "idf.pkl")
+        # Sauvegarder la valeur dans le fichier pickle
+        with open(filepath, "wb") as f:
+            pickle.dump(st.session_state.identification_idf, f)
       else:
         st.warning("Veuillez écrire un message avant d’envoyer.")
 
