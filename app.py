@@ -624,7 +624,8 @@ if st.session_state.identification == 1:
    st.text_input(
     "Nom de l'athlète",
     key="athlete",
-    value=st.session_state.athlete
+    value=st.session_state.athlete,
+    disabled=True
 )
    athlete = st.session_state.athlete
    st.session_state.distance = st.selectbox(
