@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# --- Environnement ---
+# Env de base + port par défaut (Azure fournit PORT)
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -12,38 +12,32 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Outils + OpenMP
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc g++ git curl ca-certificates wget libgomp1 \
+# Seule lib native requise (wheels numpy/sklearn/shap utilisent OpenMP)
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
  && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install --upgrade pip setuptools wheel
+# Dépendances (on force shap pour éviter la panne au runtime)
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip \
+ && python -m pip install --prefer-binary "shap>=0.45,<0.46" \
+ && python -m pip install --prefer-binary -r requirements.txt \
+ && python - <<'PY'
+import shap, numpy, sklearn
+print("✅ shap", shap.__version__, "| numpy", numpy.__version__, "| sklearn", sklearn.__version__)
+PY
 
-# Wheels lourdes en binaire uniquement
-RUN pip install --only-binary=:all: --prefer-binary \
-    "numpy==1.26.4" \
-    "scikit-learn>=1.3,<1.6" \
-    "shap>=0.45,<0.46"
-
-# Dépendances applis
-COPY requirements.txt /app/requirements.txt
-RUN pip install --prefer-binary -r /app/requirements.txt
-
-# Version
+# Version (optionnel)
 ARG GIT_SHA=dev
 RUN echo $GIT_SHA > /app/version.txt
 
 # Code
-COPY . /app
+COPY . .
 
 EXPOSE 8051
 
-# --- Lancement Streamlit ---
-# Essaie app.py puis app/app.py ; échoue proprement si rien n’existe.
-CMD sh -lc '\
-  set -e; \
-  TARGET=""; \
+# Lance app.py ou app/app.py ; sinon affiche le contenu et quitte proprement
+CMD sh -lc 'set -e; \
   if [ -f app.py ]; then TARGET=app.py; \
   elif [ -f app/app.py ]; then TARGET=app/app.py; \
-  else echo "❌ app.py introuvable (ni ./app.py ni ./app/app.py). Contenu /app :" && ls -la && exit 2; fi; \
-  exec streamlit run "$TARGET" --server.address=0.0.0.0 --server.port="${PORT:-8051}" --server.headless=true \
+  else echo "❌ app.py introuvable (./app.py ou ./app/app.py). Contenu de /app :" && ls -la && exit 2; fi; \
+  exec python -m streamlit run "$TARGET" --server.address=0.0.0.0 --server.port="${PORT:-8051}" --server.headless=true'
