@@ -125,7 +125,16 @@ def clean_decimal(val):
         except ValueError:
         # Si ce n'est pas un nombre, on garde le texte nettoyé
             return val
-
+            
+def kmh_to_pace(v_kmh):
+    sec_per_km = 3600 / v_kmh
+    minutes = int(sec_per_km // 60)
+    seconds = round(sec_per_km % 60)
+    if seconds == 60:
+        minutes += 1
+        seconds = 0
+    return minutes, seconds
+    
 def submit(ndf, athlete):
     athlete_df = ndf[ndf['Name'] == athlete]
     if len(athlete_df) == 0:
@@ -191,6 +200,92 @@ def submit(ndf, athlete):
 def calculer_coef(row):
     col_moyenne = col_map[row["Distance"]]
     return row["T/K"] - ndfperfathlete[col_moyenne].iloc[0]  # ou moyenne selon ton ndf
+def predict_time(model, score, gender, distance_km):
+    """
+    Utilitaire : prédire le temps (en minutes) pour une distance (en km)
+    avec ta structure d'inputs actuelle.
+    """
+    X = pd.DataFrame({
+        "Score/athlete": [score],
+        "Distance": [np.log(distance_km * 1000)],  # distance en mètres, puis log
+        "Gender": [gender]
+    })
+    return float(model.predict(X)[0])
+
+
+def find_distance_bisection(
+    model,
+    score,
+    gender,
+    target_time=6.0,
+    d_min=0.1,      # km (100 m)
+    d_max=20.0,     # km
+    max_iter=40,
+    tol=0.01        # tolérance sur le temps (minutes)
+):
+    """
+    Méthode de bissection pour trouver la distance (en km) telle que
+    le modèle prédit target_time (en minutes).
+    On suppose que le temps augmente avec la distance (fonction monotone).
+    """
+
+    # f(d) = temps(d) - target
+    def f(d):
+        return predict_time(model, score, gender, d) - target_time
+
+    left = d_min
+    right = d_max
+    f_left = f(left)
+    f_right = f(right)
+
+    # 1) Vérifier qu'on encadre bien la cible (changement de signe)
+    #    Si ce n'est pas le cas, on essaie d'élargir un peu la borne droite
+    tries = 0
+    while f_left * f_right > 0 and tries < 5:
+        right *= 2
+        if right > 100:   # sécurité
+            break
+        f_right = f(right)
+        tries += 1
+
+    # Toujours pas de changement de signe -> on abandonne proprement
+    if f_left * f_right > 0:
+        return None, None
+
+    best_distance = None
+    best_error = float("inf")
+
+    # 2) Bissection
+    for _ in range(max_iter):
+        mid = 0.5 * (left + right)
+        f_mid = f(mid)
+        t_mid = f_mid + target_time  # puisqu'on a f_mid = temps - target
+        error = abs(t_mid - target_time)
+
+        # On garde la meilleure solution vue
+        if error < best_error:
+            best_error = error
+            best_distance = mid
+
+        # Condition d'arrêt sur la précision
+        if error < tol:
+            break
+
+        # On choisit le sous-intervalle qui contient le changement de signe
+        if f_left * f_mid <= 0:
+            right = mid
+            f_right = f_mid
+        else:
+            left = mid
+            f_left = f_mid
+    return best_distance
+
+def next_weekday(start_date, weekday=0):
+    # weekday: 0=lundi, 1=mardi, …, 6=dimanche
+    days_ahead = weekday - start_date.weekday()
+    if days_ahead <= 0:
+        days_ahead += 7
+    return start_date + timedelta(days=days_ahead)
 
 
 # connexion à mlflow soit en ligne soit local
@@ -268,6 +363,13 @@ if "distance" not in st.session_state:
 
 if "clicsup" not in st.session_state:
     st.session_state.clicsup = 0
+
+if "prediction" not in st.session_state:
+    st.session_state.prediction = 0
+    
+if "score_athlete" not in st.session_state:
+    st.session_state.score_athlete = 0
+
 
 
 # Initialisation ou chargement du DataFrame
@@ -416,6 +518,10 @@ if st.session_state.identification == 1:
  
  if st.sidebar.button("🏃 Prédictions"):
     st.session_state.page = "application"
+
+ if st.sidebar.button("📘 Programme"):
+    st.session_state.page = "Programme"
+     
  
  if st.sidebar.button("📊 Statistiques"):
     st.session_state.page = "Statistiques"
@@ -792,7 +898,12 @@ if st.session_state.identification == 1:
            st.session_state.supprimer = 0
   distance = st.session_state.distance  
   max_count = athlete_df['Distance'].value_counts().max()
-  if max_count < 2:
+  athlete_ndf = ndf[ ndf["Name"] == st.session_state.athlete]
+  if athlete_ndf.empty:
+      score_athlete = 0
+  else:
+      score_athlete = athlete_ndf['Score/athlete/moyenne'].iloc[0]
+  if score_athlete == 0:
      st.warning(f"{athlete} n'a pas encore assez de performances pour faire des prédictions. (au moins 2 sur la meme distance)")
      st.session_state.model_train = 0
   else:
@@ -1013,7 +1124,528 @@ if st.session_state.page == "Statistiques":
      st.markdown("Aucune perf")      
     
 
+ if st.session_state.page == "Programme":
+   st.title("📘 Programme") 
+   athlete = st.session_state.athlete 
+   athlete_ndf = ndf[ ndf["Name"] == athlete]
+   if athlete_ndf.empty:
+      score_athlete = 0
+   else:
+      score_athlete = athlete_ndf['Score/athlete/moyenne'].iloc[0]
+      sexe_pred = athlete_ndf['Gender'].iloc[0]
+   
+   if score_athlete == 0:
+       st.warning(F"Vous n'avez pas enregistré suffisamment de performance pour faire un programme")
+   else:    
+    exp_nameid = 'Programme'
+    with st.form("programme"):
+               athlete_prog = st.text_input("Athlète", value= athlete, disabled=True, key='athlete_pred')
+               nombresemmaine = st.number_input(
+                 "Nombre de semaines du programme",
+                  min_value=4,
+                  max_value=12,
+                  step=1,
+                  value=4,
+                  format="%d"      # valeur par défaut
+                )
 
+               nombreentrainement = st.radio(
+                 "Nombre d'entraînements par semaine",
+                 [3, 4, 5, 6]
+                  )
+               nombrekilos = st.number_input(
+                   "Nombre de kilomètres par semaine",
+                   step=1,
+                  value=30,
+                 format="%d"
+                   )
+
+               option = [10, 21, 42]
+               distance_pred = st.selectbox("Distance cible", options=option)
+               niveau = st.selectbox("Difficulté", options=['Facile','Intermédiaire','Difficile'])
+               programme_submitted = st.form_submit_button("Programme d'entrainement personalisé")   
+               error = 0
+                
+               if nombreentrainement == 3: 
+                   if nombrekilos > 40:
+                       error = 1
+                       message =  f"{nombrekilos} km répartis sur seulement 3 séances peut provoquer des blessures ! Réduisez à 40 km !"
+                   if nombrekilos < 18:
+                       error = 1
+                       message =  f"Aller un petit effort ^^ . Au moins 18 km"
+               if nombreentrainement == 4: 
+                   if nombrekilos > 50:
+                       error = 1
+                       message =  f"{nombrekilos} km répartis sur seulement 4 séances peut provoquer des blessures ! Réduisez à 50 km !"
+                   if nombrekilos < 25:
+                       error = 1
+                       message =  f"Aller un petit effort ^^ . Au moins 25 km"
+               if nombreentrainement == 5:
+                   if nombrekilos > 60:
+                       error = 1
+                       message =  f"{nombrekilos} km répartis sur seulement 5 séances peut provoquer des blessures ! Réduisez à 60 km !"
+                   if nombrekilos < 30:
+                       error = 1
+                       message =  f"Aller un petit effort ^^ . Au moins 30 km"
+               if nombreentrainement == 6:
+                   if nombrekilos > 70:
+                       error = 1
+                       message =  f"{nombrekilos} km répartis sur seulement 6 séances peut provoquer des blessures ! Réduisez à 70 km !"
+                   if nombrekilos < 40:
+                       error = 1
+                       message =  f"Aller un petit effort ^^ . Au moins 40 km"
+               if error == 1:
+                             st.warning(message)
+                   
+             
+               if programme_submitted and error == 0:
+                    df_athlete = ndf[ndf["Name"] == athlete_prog]
+    
+                    #eval profil(endurance ou vitesse)
+                    colonnes = [
+    "Rapport(Athlete/moyenne)5k au km",
+    "Rapport(Athlete/moyenne)10k au km",
+    "Rapport(Athlete/moyenne)21k au km",
+    "Rapport(Athlete/moyenne)42k au km"
+]
+                    colonnes_trouvees = df_athlete[colonnes].notnull().any()
+                    colonnes_trouvees = colonnes_trouvees[colonnes_trouvees].index.tolist()
+                    
+                    if len(colonnes_trouvees) == 1:
+                        if colonnes_trouvees == "Rapport(Athlete/moyenne/5k)" or colonnes_trouvees == "Rapport(Athlete/moyenne/10k)":
+                             profil = 'vitesse'
+                        else:
+                             profil = 'endurance'
+                    else:
+                         moyennes_par_colonne = {}
+                         for col in colonnes_trouvees:
+                              moyennes_par_colonne[col] = df_athlete[col].mean()
+                         col_min = min(moyennes_par_colonne, key=moyennes_par_colonne.get)
+                         ordre_colonnes = {
+    "Rapport(Athlete/moyenne)5k au km": 1,
+    "Rapport(Athlete/moyenne)10k au km": 2,
+    "Rapport(Athlete/moyenne)21k au km": 3,
+    "Rapport(Athlete/moyenne)42k au km": 4,
+}
+                         col_plus_basse_semantique = min(colonnes_trouvees, key=lambda c: ordre_colonnes[c])
+                         col_plus_haute_semantique = max(colonnes_trouvees, key=lambda c: ordre_colonnes[c])
+                         if col_min == col_plus_basse_semantique:
+                             profil = 'vitesse'
+                         elif col_min == col_plus_haute_semantique:
+                             profil = 'endurance'
+                         else:
+                             if col_min == "Rapport(Athlete/moyenne/5k)" or col_min == "Rapport(Athlete/moyenne/10k)" :
+                                 profil = 'vitesse'
+                             else:
+                                 profil = 'endurance'
+                    #eval vma
+
+                   # 1) Récupérer le dernier run (adapter le nom d'expérience si besoin)
+                    runs = mlflow.search_runs(
+                    experiment_names=["pipeline"], order_by=["start_time desc"], max_results=1
+                    )
+                    run_id = runs.iloc[0]["run_id"]
+
+                    # 2) Télécharger l'artefact 'model_pipeline/model_pipeline.pkl'
+                    client = MlflowClient()
+                    local_dir = client.download_artifacts(run_id, "model_pipeline", dst_path="./restore")
+                    pkl_path = os.path.join(local_dir, "model_pipeline.pkl")
+
+                    # 3) Charger la pipeline
+                    pipeline = joblib.load(pkl_path)   # ou: pickle.load(open(pkl_path, "rb"))
+                    VMA = find_distance_bisection(pipeline, score_athlete, sexe_pred)
+                    VMA = VMA * 10
+                    
+                    
+                    row = {
+                    "Name": athlete_prog,
+                    "VMA": VMA,
+                    "profil": profil,
+                    "semaineprogramme": nombresemmaine,
+                    "nbkilosemaine": nombrekilos,
+                    "nbentrainementsemaine": nombreentrainement,
+                    "niveauprogramme": niveau,
+                    "distancecible": distance_pred                    
+}
+                    
+                    exp_nameid = 'Programme'
+                    pdf = get_data("data/pdf.pkl", exp_nameid)
+                    athlete_pdf = pdf[pdf["Name"] == athlete_prog]
+                   
+                    
+                    if len(athlete_pdf) > 0 :
+                         dist_old = int(athlete_pdf['distancecible'].iloc[0])
+                         dist_new = int(distance_pred)
+                         st.success(f"Programme {dist_old} km remplacé par un programme sur {dist_new} km")
+                         # Trouver l'index de la ligne à modifier
+                         idx = pdf.index[pdf["Name"] == athlete][0]
+                         # Modifier la ligne
+                         pdf.loc[idx, :] = row
+                    else:
+                         dist_new = int(distance_pred)
+                         st.success(F"Programme {dist_new} km créé")
+                         pdf = pd.concat([pdf, pd.DataFrame([row])], ignore_index=True)
+                    pdf.to_csv("data.csv", index=False)
+                    exp_nameid = 'Programme'
+                    nrun_name = 'data'+str(athlete_prog) + str(exp_nameid)
+                    log_dataframe_to_mlflow(pdf, nrun_name, exp_nameid)
+                    # création du programme
+    pdf = get_data("data/pdf.pkl", exp_nameid)
+    athlete_pdf = pdf[pdf["Name"] == athlete_prog]
+    if athlete_pdf.empty:
+                    st.markdown("Vous n'avez pas encore de programme d'entrainement") 
+    else:
+                #initvariable
+                    
+                    athlete = athlete_prog
+                    VMA = athlete_pdf['VMA'].iloc[0]
+                    profil = athlete_pdf['profil'].iloc[0]
+                    nombresemmaine = athlete_pdf['semaineprogramme'].iloc[0]
+                    nombrekilos = athlete_pdf['nbkilosemaine'].iloc[0]
+                    nombreentrainement = athlete_pdf['nbentrainementsemaine'].iloc[0]
+                    niveau = athlete_pdf['niveauprogramme'].iloc[0]
+                    distance_pred = athlete_pdf['distancecible'].iloc[0]
+                              
+
+
+       
+    # recherche nombrede seance par type
+                    #sortilongue
+                    longuesemaine = 1
+                    #fractionné
+                    if nombreentrainement == 3 or nombreentrainement == 4:
+                          if distance_pred == 5 :
+                               typefractionne = 'court'
+                               fractionnesemaine = 1
+                          else:
+                               typefractionne = 'long'
+                               fractionnesemaine = 1
+                    if  nombreentrainement == 5:
+                          if profil == 'endurance':
+                              if distance_pred == 5 or distance_pred == 10:
+                                  fractionnesemaine = 2
+                              else:
+                                  fractionnesemaine = 1
+                                  typefractionne = 'long'
+                          else:
+                              fractionnesemaine = 1
+                              typefractionne = 'long'
+
+                    if nombreentrainement == 6:
+                          if profil == 'vitesse':
+                              if distance_pred == 42 and nombrekilos < 60:
+                                  fractionnesemaine = 1
+                                  typefractionne = 'long'
+                              else:
+                                  fractionnesemaine = 2
+                          else:
+                              fractionnesemaine = 2
+
+                    
+              
+                    
+                    
+
+
+                    newnombrekilo = nombrekilos
+                    sfractsemaine = fractionnesemaine
+                    st.title(f"Programme pour préparer un {int(distance_pred)} km pour {athlete_prog}")
+                    for semaine in range(1, nombresemmaine + 1):
+
+                    #calcul kilometragedelasemaine
+                      if semaine == 1:
+                         newnombrekilo = newnombrekilo
+                      else:
+                        if niveau == 'Facile':
+                          if semaine % 4 != 0 and semaine != nombresemmaine :
+                              newnombrekilo = newnombrekilo + (5 * newnombrekilo/100)
+                              fractionnesemaine = sfractsemaine
+                          else:
+                              newnombrekilo = newnombrekilo * 0.9
+                              fractionnesemaine = 0
+                        if niveau == 'Intermédiaire':
+                          if semaine % 4 != 0 and semaine != nombresemmaine:
+                              newnombrekilo = newnombrekilo + (8 * newnombrekilo/100)
+                              fractionnesemaine = sfractsemaine
+                          else:
+                              newnombrekilo = newnombrekilo * 0.85
+                              fractionnesemaine = 0
+                        if niveau == 'Difficile':
+                          if semaine % 4 != 0 and semaine != nombresemmaine :
+                              newnombrekilo = newnombrekilo + (10 * newnombrekilo/100)
+                              fractionnesemaine = sfractsemaine
+                          else:
+                              newnombrekilo = newnombrekilo * 0.8
+                              fractionnesemaine = 0
+                    #calcul kilometre séance
+                    #fraction
+                      tierprogramme = (semaine - 1) * 3 // nombresemmaine + 1
+                      footingsemaine = nombreentrainement - longuesemaine - fractionnesemaine
+                      nbechauffement = fractionnesemaine
+                      nbretouraucalme = fractionnesemaine
+                      echauffementkilo = 2
+                      retouraucalmekilo = 2
+                      
+                      if niveau == 'Facile':
+                        if fractionnesemaine == 0:
+                            kilofractionnelong = 0
+                            kilofractionnecourt = 0
+                        if fractionnesemaine == 1:
+                            if typefractionne =='court':
+                               kilofractionnecourt = newnombrekilo * 15 / 100
+                               if kilofractionnecourt > 1.5:
+                                  kilofractionnecourt = 1.5
+                               kilofractionnelong = 0
+                            if typefractionne =='long':
+                               kilofractionnelong = newnombrekilo * 15 / 100 
+                               if kilofractionnelong > 6:
+                                  kilofractionnelong = 6
+                               kilofractionnecourt = 0
+                        if fractionnesemaine == 2:
+                             kilofract = newnombrekilo * 20 / 100
+                             kilofractionnecourt = kilofract * 40 / 100
+                             if kilofractionnecourt > 1.5:
+                                 kilofractionnecourt = 1.5
+                             kilofractionnelong = kilofract - kilofractionnecourt
+                             if kilofractionnelong > 6:
+                                  kilofractionnelong = 6
+                      if niveau == 'Intermédiaire':
+                        if fractionnesemaine == 0:
+                            kilofractionnelong = 0
+                            kilofractionnecourt = 0
+                        if fractionnesemaine == 1:
+                            if typefractionne =='court':
+                               kilofractionnecourt = newnombrekilo * 20 / 100
+                               if kilofractionnecourt > 2:
+                                  kilofractionnecourt = 2 
+                               kilofractionnelong = 0
+                            if typefractionne =='long':
+                               kilofractionnelong = newnombrekilo * 20 / 100 
+                               if kilofractionnelong > 8:
+                                   kilofractionnelong = 8
+                               kilofractionnecourt = 0
+                        if fractionnesemaine == 2:
+                             kilofract = newnombrekilo * 25 / 100
+                             kilofractionnecourt = kilofract * 40 / 100
+                             if kilofractionnecourt > 2:
+                                kilofractionnecourt = 2 
+                             kilofractionnelong = kilofract - kilofractionnecourt
+                             if kilofractionnelong > 8:
+                                kilofractionnelong = 8
+                      if niveau == 'Difficile':
+                        if fractionnesemaine == 0:
+                            kilofractionnelong = 0
+                            kilofractionnecourt = 0
+                        kilofractionne = newnombrekilo * 25 / 100
+                        if fractionnesemaine == 1:
+                            if typefractionne =='court':
+                               kilofractionnecourt = newnombrekilo * 25 / 100
+                               if kilofractionnecourt > 3:
+                                  kilofractionnecourt = 3
+                               kilofractionnelong = 0
+                            if typefractionne =='long':
+                               kilofractionnelong = newnombrekilo * 25 / 100 
+                               if kilofractionnelong > 10 :
+                                  kilofractionnelong = 10
+                               kilofractionnecourt = 0
+                        if fractionnesemaine == 2:
+                             kilofract = newnombrekilo * 25 / 100
+                             kilofractionnecourt = kilofract * 40 / 100
+                             if kilofractionnecourt > 3 :
+                                  kilofractionnecourt = 3
+                             kilofractionnelong = kilofract - kilofractionnecourt
+                             if kilofractionnelong > 10:
+                                kilofractionnelong = 10 
+                    #sortielongue
+                       
+                      
+                      if distance_pred == 42:
+                           kilosortielongue = newnombrekilo  * ((1 / nombreentrainement)  + 0.15)
+                      if distance_pred == 21:
+                           kilosortielongue = newnombrekilo  * ((1 / nombreentrainement)  + 0.10)
+                      if distance_pred == 10:
+                           kilosortielongue = newnombrekilo  * ((1 / nombreentrainement)  + 0.075)
+                      kilofooting = (newnombrekilo - kilosortielongue - kilofractionnecourt - kilofractionnelong - (nbretouraucalme * retouraucalmekilo) - (nbechauffement * echauffementkilo)) / footingsemaine
+                     
+                    #calcul vitesse
+                      if niveau == 'Facile':
+                        Vsortielongue = VMA * 57 / 100
+                        Vfooting = VMA * 57 / 100
+                        Vfractionne100 = VMA * 92 / 100 
+                        Vfractionne200 = VMA * 92 / 100 
+                        Vfractionne300 = VMA * 89 / 100 
+                        Vfractionne400 = VMA * 87 / 100 
+                        Vfractionne500 = VMA * 85 / 100 
+                        Vfractionne800 = VMA * 81 / 100 
+                        Vfractionne1000 = VMA * 80 / 100 
+                        Vfractionne2000 = VMA * 76 / 100 
+                      if niveau == 'Intermédiaire':
+                        Vsortielongue = VMA * 60 / 100
+                        Vfooting = VMA * 60 / 100
+                        Vfractionne100 = VMA * 95 / 100 
+                        Vfractionne200 = VMA * 95 / 100 
+                        Vfractionne300 = VMA * 92 / 100 
+                        Vfractionne400 = VMA * 90 / 100 
+                        Vfractionne500 = VMA * 88 / 100 
+                        Vfractionne800 = VMA * 84 / 100 
+                        Vfractionne1000 = VMA * 82 / 100 
+                        Vfractionne2000 = VMA * 78 / 100 
+                      if niveau == 'Difficile':
+                        Vsortielongue = VMA * 65 / 100
+                        Vfooting = VMA * 65 / 100
+                        Vfractionne100 = VMA * 100 / 100 
+                        Vfractionne200 = VMA * 100 / 100 
+                        Vfractionne300 = VMA * 96 / 100 
+                        Vfractionne400 = VMA * 94 / 100 
+                        Vfractionne500 = VMA * 92 / 100 
+                        Vfractionne800 = VMA * 87 / 100 
+                        Vfractionne1000 = VMA * 85 / 100 
+                        Vfractionne2000 = VMA * 81 / 100 
+                     # preparation du programme
+                     #semaine 1
+                      st.title(f"Semaine {semaine}/{nombresemmaine}")
+                      st.subheader("Lundi")
+                      st.write("Repos")
+                      st.subheader("Mardi")
+                      if fractionnesemaine == 0:
+                         minute, seconde = kmh_to_pace(Vfooting)
+                         st.write(F"Footing :{round(kilofooting, 1)} KM à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      else : 
+                        if fractionnesemaine == 2 or (fractionnesemaine == 1 and typefractionne =='court'):
+                             if tierprogramme == 1:
+                                 if semaine % 2 == 1:
+                                     nombrerepetition = round(kilofractionnecourt / 100 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     if nombrerepetition > 15:
+                                         if nombrerepetition % 2 != 0:
+                                            nombrerepetition = nombrerepetition + 1
+                                         repetitionbloc = nombrerepetition / 2
+                                         repetitionbloc = int(round(repetitionbloc))
+                                         minute, seconde = kmh_to_pace(Vfractionne100)
+                                         st.write(F"Fractionné court : 2 blocs de {repetitionbloc} × 100 m à {round(Vfractionne100, 2)} km/h({minute}m{str(seconde).zfill(2)} le km)")
+                                     else :
+                                         minute, seconde = kmh_to_pace(Vfractionne100)
+                                         st.write(F"Fractionné court : {nombrerepetition} × 100 m à {round(Vfractionne100, 2)} km/h({minute},{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 else:
+                                     nombrerepetition = round(kilofractionnecourt / 200 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfractionne200)
+                                     st.write(F"Fractionné court : {nombrerepetition} × 200 m à {round(Vfractionne200, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 2:
+                                 if semaine % 2 == 1:
+                                     nombrerepetition = round(kilofractionnecourt / 300 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfractionne300)
+                                     st.write(F"Fractionné court : {nombrerepetition} ×  300m à {round(Vfractionne300, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 else:
+                                     nombrerepetition = round(kilofractionnecourt / 400 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfractionne400)
+                                     st.write(F"Fractionné court : {nombrerepetition} × 400 m à {round(Vfractionne400, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 3:
+                                 if semaine % 2 == 1:
+                                     nombrerepetition = round(kilofractionnecourt / 400 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfractionne400)
+                                     st.write(F"Fractionné court : {nombrerepetition} × 400 m à {round(Vfractionne400, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 else:
+                                     nombrerepetition = round(kilofractionnecourt / 500 * 1000)
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km d'echauffement à {Vfooting} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfractionne500)
+                                     st.write(F"Fractionné court : {nombrerepetition} × 500 m à {round(Vfractionne500, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                     minute, seconde = kmh_to_pace(Vfooting)
+                                     st.write(F"2 km de retour au calme à {Vfooting} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                        else:
+                             if tierprogramme == 1:
+                                 nombrerepetition = round(kilofractionnelong / 800 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne800)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 800 m à {round(Vfractionne800, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 2:
+                                 nombrerepetition = round(kilofractionnelong / 1000 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne1000)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 1000 m à {round(Vfractionne1000, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 3:
+                                 nombrerepetition = round(kilofractionnelong / 2000 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne2000)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 2000 m à {round(Vfractionne2000, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      st.subheader("Mercredi")
+                      if nombreentrainement > 4:
+                         minute, seconde = kmh_to_pace(Vfooting)
+                         st.write(F"Footing :{round(kilofooting, 1)} KM à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      else:
+                         st.write("Repos")
+                      st.subheader("Jeudi")
+                      minute, seconde = kmh_to_pace(Vfooting)
+                      st.write(F"Footing :{round(kilofooting, 1)} KM à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      st.subheader("Vendredi")
+                      if nombreentrainement > 3:
+                         if fractionnesemaine == 2:
+                             if tierprogramme == 1:
+                                 nombrerepetition = round(kilofractionnelong / 800 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne800)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 800 m à {round(Vfractionne800, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 2:
+                                 nombrerepetition = round(kilofractionnelong / 1000 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne1000)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 1000 m à {round(Vfractionne1000, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                             if tierprogramme == 3:
+                                 nombrerepetition = round(kilofractionnelong / 2000 * 1000)
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km d'echauffement à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfractionne2000)
+                                 st.write(F"Fractionné long : {nombrerepetition} × 2000 m à {round(Vfractionne2000, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                                 minute, seconde = kmh_to_pace(Vfooting)
+                                 st.write(F"2 km de retour au calme à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                         else:
+                               minute, seconde = kmh_to_pace(Vfooting)
+                               st.write(F"Footing :{round(kilofooting, 1)} KM à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      else:
+                         st.write("Repos")
+                      st.subheader("Samedi")
+                      if nombreentrainement > 5:
+                        minute, seconde = kmh_to_pace(Vfooting)
+                        st.write(F"Footing :{round(kilofooting, 1)} KM à {round(Vfooting, 2)} km/h({minute}m{str(seconde).zfill(2)}s le km)")
+                      else:
+                        st.write("Repos")
+                      st.subheader("Dimanche")
+                      minute, seconde = kmh_to_pace(Vsortielongue)
+                      st.write(F"Sortie longue : {round(kilosortielongue, 1)} KM à {round(Vsortielongue, 2)} km/h({minute}m{str(str(seconde).zfill(2))}s le km)")
 if st.session_state.page == "contact":
     athlete = st.session_state.athlete
     st.title("📞 Contact")
