@@ -1,0 +1,12 @@
+# Ignorer tout
+*
+
+# Garder ce fichier
+!.gitignore
+
+# Garder app.py
+!app.py
+
+# Garder data
+!data/
+!data/**
