@@ -20,8 +20,6 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from category_encoders import TargetEncoder 
 import os
-from mlflow.tracking import MlflowClient
-import mlflow.pyfunc
 import pickle
 import tempfile
 import shap
