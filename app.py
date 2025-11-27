@@ -6,8 +6,6 @@ import sys
 import requests
 import time
 import joblib
-import mlflow
-import mlflow.sklearn
 from sklearn.linear_model import ElasticNet
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
