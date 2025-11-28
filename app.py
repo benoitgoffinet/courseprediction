@@ -572,7 +572,7 @@ if st.session_state.identification == 1:
             if st.button(f"Envoyer la réponse à {utilisateur}", key=f"btn_{row.name}"):
                 if nouvelle_reponse.strip():
                     mdf.at[row.name, "reponse"] = nouvelle_reponse
-                    path = data/mdf.csv
+                    path = 'data/mdf.csv'
                     path_blob = 'mdf.csv'
                     log_dataframe(mdf, path, path_blob)
                     st.success("✅ Réponse enregistrée!")
@@ -585,7 +585,7 @@ if st.session_state.identification == 1:
             if st.button("Supprimer le message", key=f"delete_{row.name}"):
                 mdf = mdf.drop(row.name)
                 mdf = mdf.reset_index(drop=True)
-                path = data/mdf.csv
+                path = 'data/mdf.csv'
                 path_blob = 'mdf.csv'
                 log_dataframe(mdf, path, path_blob)
                 st.warning(f"🗑️ Message de {utilisateur} supprimé.")
