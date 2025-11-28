@@ -33,6 +33,7 @@ import streamlit as st
 from datetime import date, timedelta
 from azure.storage.blob import BlobClient
 import io
+import duckdb
 
 
 def get_data(blob_path):
