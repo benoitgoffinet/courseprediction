@@ -7,3 +7,4 @@ shap
 matplotlib
 plotly
 azure-storage-blob
+duckdb
