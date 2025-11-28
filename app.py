@@ -33,32 +33,81 @@ import streamlit as st
 from datetime import date, timedelta
 
 
-def get_data(local_path):
-    try:
-        df = pd.read_csv(local_path)
-        print("📂 Dataset chargé localement")
-        return df
+def get_data(blob_path):
+    blob = BlobClient.from_connection_string(
+        conn_str=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
+        container_name="data",
+        blob_name=blob_path
+    )
 
-    except FileNotFoundError:
-        print(f"❌ Fichier introuvable : {local_path}")
-        return pd.DataFrame() 
+    stream = io.BytesIO(blob.download_blob().readall())
+    df = pd.read_csv(stream)
+    return df
 
-    except pd.errors.EmptyDataError:
-        print("⚠️ Le fichier est vide. Création d’un DataFrame vide.")
-        return pd.DataFrame()  # → DataFrame vide
 
-    except Exception as e:
-        print(f"⚠️ Erreur lors du chargement du fichier : {e}")
-        return pd.DataFrame()
+def log_dataframe(df, local_path, blob_path):
+    # 1. Sauvegarde du DataFrame en local
+    df.to_csv(local_path, index=False)
 
-def log_dataframe(df, df_path):
-    """
-    sauvegarde dataframe
-    """
-    df.to_csv(df_path, index=False)
+    # 2. Connexion à Azure Blob Storage
+    blob = BlobClient.from_connection_string(
+        conn_str=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
+        container_name="data",
+        blob_name=blob_path
+    )
+
+    # 3. Upload du fichier local vers Azure Blob
+    with open(local_path, "rb") as f:
+        blob.upload_blob(f, overwrite=True)
+
+    print(f"✔ DataFrame sauvegardé localement : {local_path}")
+    print(f"✔ DataFrame uploadé dans Azure Blob : data/{blob_path}")
         
 
+def save_model_pkl(model, local_path, blob_path):
+    """
+    Sauvegarde un modèle en .pkl localement puis le charge dans Azure (container: models)
+    model      : objet Python (sklearn, dict, etc.)
+    local_path : chemin local pour écrire le fichier .pkl
+    blob_path  : chemin dans Azure Blob Storage (models/model.pkl)
+    """
+    # 1. Sauvegarde du modèle en local
+    with open(local_path, "wb") as f:
+        pickle.dump(model, f)
 
+    # 2. Connexion Azure
+    blob = BlobClient.from_connection_string(
+        conn_str=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
+        container_name="models",  # <-- ton conteneur pour les modèles
+        blob_name=blob_path
+    )
+
+    # 3. Upload du fichier
+    with open(local_path, "rb") as f:
+        blob.upload_blob(f, overwrite=True)
+
+    print(f"✔ Modèle sauvegardé localement : {local_path}")
+    print(f"✔ Modèle uploadé dans Azure    : models/{blob_path}")
+
+def load_model_pkl(blob_path):
+    """
+    Charge un modèle .pkl depuis Azure Blob Storage (container: models)
+    blob_path : nom du fichier dans le conteneur models (ex: 'pipeline.pkl')
+    """
+    blob = BlobClient.from_connection_string(
+        conn_str=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
+        container_name="models",
+        blob_name=blob_path
+    )
+
+    # Télécharger les données sous forme de bytes
+    data = blob.download_blob().readall()
+
+    # Charger le modèle pickle
+    model = pickle.loads(data)
+
+    print(f"✔ Modèle chargé depuis Azure : models/{blob_path}")
+    return model
     
 def clean_decimal(val):
     # Si la valeur est None ou vide
@@ -146,7 +195,8 @@ def submit(ndf, athlete):
       athlete_df = ndf[ndf["Name"] == athlete]
       athlete_count = len(athlete_df)
       path = 'data/ndfs.csv'
-      log_dataframe(ndf, path)
+      path_blob = 'ndfs.csv'
+      log_dataframe(ndf, path, path_blob)
         
 # Sélection dynamique de la bonne colonne en fonction de la distance
 def calculer_coef(row):
@@ -281,16 +331,16 @@ if "identification_echec" not in st.session_state:
     st.session_state.identification_echec = 0
 
 if "ndf" not in st.session_state:
-    st.session_state.ndf = get_data("data/ndfs.csv")
+    st.session_state.ndf = get_data("ndfs.csv")
 
 if "idf" not in st.session_state:
-    st.session_state.identification_idf = get_data("data/idf.csv")
+    st.session_state.identification_idf = get_data("idf.csv")
 
 if "mdf" not in st.session_state:
-    st.session_state.mdf = get_data("data/mdf.csv")
+    st.session_state.mdf = get_data("mdf.csv")
 
 if "pdf" not in st.session_state:
-    st.session_state.pdf = get_data("data/pdf.csv")
+    st.session_state.pdf = get_data("pdf.csv")
 
 if "suite" not in st.session_state:
     st.session_state.suite = 0
@@ -377,7 +427,8 @@ if st.session_state.identification == 0:
 }
                  idf = pd.concat([idf, pd.DataFrame([row])], ignore_index=True) 
                  path = 'data/idf.csv'
-                 log_dataframe(idf, path)
+                 path_blob = 'idf.csv'
+                 log_dataframe(idf, path, path_blob)
                  st.session_state.identification_idf = idf
               else:
                  st.warning("Répondez à la question")
@@ -395,7 +446,8 @@ if st.session_state.identification == 0:
                    )
                    idf.loc[idf["Name"] == athlete, "datederniereconnexion"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                    path = 'data/idf.csv'
-                   log_dataframe(idf, path)
+                   path_blob = 'idf.csv'
+                   log_dataframe(idf, path, path_blob)
                    st.session_state.identification_idf = idf
                    
               else:  
@@ -408,7 +460,8 @@ if st.session_state.identification == 0:
                     idf.loc[idf["Name"] == athlete, "echecconnexion"] + 1
                     )
                     path = 'data/idf.csv'
-                    log_dataframe(idf, path)
+                    path_blob = 'idf.csv'
+                    log_dataframe(idf, path, path_blob)
                     st.session_state.identification_idf = idf
               if st.session_state.identification_echec == 1:
                     st.warning("Vous avez oublié votre code? Répondez à la question")
@@ -516,7 +569,9 @@ if st.session_state.identification == 1:
             if st.button(f"Envoyer la réponse à {utilisateur}", key=f"btn_{row.name}"):
                 if nouvelle_reponse.strip():
                     mdf.at[row.name, "reponse"] = nouvelle_reponse
-                    log_dataframe(mdf, "data/mdf.csv")
+                    path = data/mdf.csv
+                    path_blob = 'mdf.csv'
+                    log_dataframe(mdf, path, path_blob)
                     st.success("✅ Réponse enregistrée!")
                     st.rerun()
 
@@ -527,7 +582,9 @@ if st.session_state.identification == 1:
             if st.button("Supprimer le message", key=f"delete_{row.name}"):
                 mdf = mdf.drop(row.name)
                 mdf = mdf.reset_index(drop=True)
-                log_dataframe(mdf, "data/mdf.csv")
+                path = data/mdf.csv
+                path_blob = 'mdf.csv'
+                log_dataframe(mdf, path, path_blob)
                 st.warning(f"🗑️ Message de {utilisateur} supprimé.")
                 st.rerun()
 
@@ -585,7 +642,8 @@ if st.session_state.identification == 1:
      idf.loc[idf["Name"] == athlete, "perfenregistre"] + 1
      )
      path = 'data/idf.csv'
-     log_dataframe(idf, path)
+     path_blob = 'idf.csv'
+     log_dataframe(idf, path, path_blob)
      st.session_state.identification_idf = idf
 
 #entrainement model(a retirer quand suffisamment de data avec variable datascoremoyenne) = laisser seulement lentrainement dans admin
@@ -659,20 +717,14 @@ if st.session_state.identification == 1:
      best_score = grid_search.best_score_
      best_params = grid_search.best_params_
 
-# Log dans MLflow
+
      ndfperfathlete = ndf[ndf['Name'] == athlete]
      print(F'R2_Score_VC:  {best_score}')
      print(F'best param:  {best_params}')
      print(F'training_duration_str:  {duration_str}')
-     # Chemin du dossier et du fichier
-     model_dir = "Model"
-     model_path = os.path.join(model_dir, "pipeline.pkl")
-
-# 🔹 Créer le dossier Model s'il n'existe pas
-     os.makedirs(model_dir, exist_ok=True)
-
-# 🔹 Sauvegarder la pipeline dans Model/pipeline.pkl
-     joblib.dump(pipeline, model_path)
+     local_path = 'Model/pipeline.pkl'  
+     blob_path = 'pipeline.pkl'
+     save_model_pkl(pipeline, local_path, blob_path)
      
 
      st.session_state.pipeline = pipeline
@@ -720,7 +772,8 @@ if st.session_state.identification == 1:
            athlete_df = ndf[ndf["Name"] == athlete]
            athlete_count = len(athlete_df)
            path = 'data/ndfs.csv'
-           log_dataframe(ndf, path)
+           path_blob = 'ndfs.csv'
+           log_dataframe(ndf, path, path_blob)
            st.session_state.supprimer = 0
   distance = st.session_state.distance  
   max_count = athlete_df['Distance'].value_counts().max()
@@ -755,8 +808,8 @@ if st.session_state.identification == 1:
           st.warning("✅ L'athlète a déjà couru toutes les distances disponibles.")
       else:
          if predict_submitted:
-             
-             pipeline = joblib.load("Model/pipeline.pkl")
+             blob_path = 'pipeline.pkl'
+             pipeline = load_model_pkl(blob_path)
              score_athlete = ndf.loc[ndf['Name'] == athlete_pred, 'Score/athlete/moyenne'].iloc[0]
              st.session_state.score_athlete = score_athlete
              X_new = pd.DataFrame({
@@ -776,7 +829,8 @@ if st.session_state.identification == 1:
              idf.loc[idf["Name"] == athlete, "nombredeprediction"] + 1
              )
              path = 'data/idf.csv'
-             log_dataframe(idf, path)
+             path_blob = 'idf.csv'
+             log_dataframe(idf, path, path_blob)
              st.session_state.identification_idf = idf
              st.session_state.prediction = 1
              st.markdown(f"Essayey d'améliorer votre performance sur {distance_pred} km grace à nos programmes personnalisés")
@@ -1058,7 +1112,8 @@ if st.session_state.identification == 1:
                                  profil = 'vitesse'
                              else:
                                  profil = 'endurance'
-                    pipeline = joblib.load("Model/pipeline.pkl")
+                    blob_path = 'pipeline.pkl'
+                    pipeline = load_model_pkl(blob_path)
                     VMA = find_distance_bisection(pipeline, score_athlete, sexe_pred)
                     VMA = VMA * 10
                     
@@ -1092,7 +1147,8 @@ if st.session_state.identification == 1:
                          st.success(F"Programme {dist_new} km créé")
                          pdf = pd.concat([pdf, pd.DataFrame([row])], ignore_index=True)
                     path = 'data/pdf.csv'
-                    log_dataframe(pdf, path)
+                    path_blob = 'pdf.csv'
+                    log_dataframe(pdf, path, path_blob)
                     st.session_state.pdf = pdf
                     # création du programme
     athlete_pdf = pdf[pdf["Name"] == athlete_prog]
@@ -1480,7 +1536,8 @@ if st.session_state.identification == 1:
         idf.loc[idf["Name"] == athlete, "messageenvoye"] + 1
              )
         path = 'data/idf.csv'
-        log_dataframe(idf, path)
+        path_blob = 'idf.csv'
+        log_dataframe(idf, path, path_blob)
         st.session_state.identification_idf = idf
         #envoidumessage
         new_row = {
@@ -1492,7 +1549,8 @@ if st.session_state.identification == 1:
 
         mdf = pd.concat([mdf, pd.DataFrame([new_row])], ignore_index=True)
         path = 'data/mdf.csv'
-        log_dataframe(mdf, path)
+        path_blob = 'mdf.csv'
+        log_dataframe(mdf, path, path_blob)
         st.session_state.mdf = mdf
       else:
         st.warning("Veuillez écrire un message avant d’envoyer.")
