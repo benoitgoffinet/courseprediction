@@ -364,7 +364,8 @@ if "score_athlete" not in st.session_state:
 if "activation" not in st.session_state:
     st.session_state.activation = 0
 
-
+# test
+print("DEBUG STORAGE =", os.getenv("AZURE_STORAGE_CONNECTION_STRING"))
 
 # --- Chargement ou initialisation ---
 ndf  = st.session_state.ndf
