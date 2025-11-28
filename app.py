@@ -540,8 +540,7 @@ if st.session_state.identification == 1:
 
   
 
-     st.write("📬 Messages reçus (MLflow)")
-     mlflow.end_run() 
+     st.write("📬 Messages reçus")
      print(f'mdf {mdf}')
      total_messages = len(mdf)
      print(f'total_messages {total_messages}')
