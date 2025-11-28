@@ -31,6 +31,7 @@ import smtplib
 from email.mime.text import MIMEText
 import streamlit as st
 from datetime import date, timedelta
+from azure.storage.blob import BlobClient
 
 
 def get_data(blob_path):
