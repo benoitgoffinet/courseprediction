@@ -6,3 +6,4 @@ category_encoders
 shap
 matplotlib
 plotly
+azure-storage-blob
